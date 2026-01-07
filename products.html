@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products | Varshini Industries</title>
+    <meta name="description"
+        content="Explore our extensive range of industrial pumping solutions, from monoblocks to submersibles.">
+
+    <!-- Google Fonts: Roboto Condensed & Open Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto+Condensed:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Specific Styles for Products Page */
+        .page-header {
+            background: linear-gradient(135deg, #0A2540 0%, #051626 100%);
+            padding: 80px 0; /* Balanced padding for vertical centering */
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center; /* Vertical Center */
+            justify-content: center;
+            min-height: 300px; /* Ensure enough height for visual weight */
+        }
+
+        .page-header h1 {
+            font-size: 4rem; /* Increased size */
+            margin-bottom: 20px;
+            color: #ffffff; /* Explicit White */
+            font-weight: 800; /* Bolder */
+            text-transform: uppercase;
+        }
+
+        .page-header p {
+            font-size: 1.5rem; /* Increased size */
+            opacity: 0.9;
+            max-width: 800px; /* Wider to accommodate text */
+            margin: 0 auto;
+            line-height: 1.6;
+            color: #e0e0e0; /* Off-white for subtitle */
+        }
+
+        .products-layout {
+            display: flex;
+            gap: 40px;
+            padding-bottom: 80px;
+        }
+
+        .sidebar-filter {
+            width: 300px; /* Increased width to prevent excessive wrapping */
+            flex-shrink: 0;
+            background: #fff;
+            padding: 25px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            height: fit-content;
+            max-height: calc(100vh - 140px); /* Ensure it fits in viewport */
+            overflow-y: auto; /* Scroll if category list is too long */
+            position: sticky;
+            top: 100px;
+            scrollbar-width: thin; /* Modern browsers scrollbar */
+            scrollbar-color: var(--industrial-teal) #f1f1f1;
+        }
+
+        /* Custom Scrollbar for Chrome/Safari */
+        .sidebar-filter::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar-filter::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .sidebar-filter::-webkit-scrollbar-thumb {
+            background: var(--industrial-teal);
+            border-radius: 10px;
+        }
+
+        .sidebar-filter h3 {
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .category-list {
+            list-style: none;
+        }
+
+        .category-list li {
+            margin-bottom: 5px; /* Reduced margin */
+        }
+
+        .category-list a {
+            display: block;
+            padding: 8px 12px; /* Optimized padding */
+            border-radius: 4px;
+            color: #555;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .category-list a:hover,
+        .category-list a.active {
+            background-color: var(--industrial-teal);
+            color: white;
+        }
+
+        .main-catalog {
+            flex-grow: 1;
+        }
+
+        @media (max-width: 900px) {
+            .products-layout {
+                flex-direction: column;
+            }
+            .sidebar-filter {
+                display: none; /* Hidden on mobile/tablet portrait, use bottom nav/menu */
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header (Same as Index) -->
+    <header class="main-header">
+        <div class="top-bar">
+            <div class="container top-bar-flex">
+                <div class="support-info">
+                    <a href="mailto:info@varshiniindustrries.com" class="top-contact-link">
+                        <i class="fa-regular fa-envelope"></i> info@varshiniindustrries.com
+                    </a>
+                    <a href="tel:+918047838824" class="top-contact-link">
+                        <i class="fa-solid fa-phone"></i> +91-8047838824
+                    </a>
+                </div>
+                <div class="top-links">
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-youtube"></i></a>
+                    <span style="opacity: 0.3; margin: 0 10px;">|</span>
+                    <a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin</a>
+                    <a href="#"><i class="fa-solid fa-file-pdf"></i> Catalog</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="navbar" id="navbar">
+            <div class="container nav-flex">
+                <a href="index.html" class="logo">
+                     <img src="Logo.jpeg" alt="Varshini Industrries Logo" class="logo-image">
+                </a>
+
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    
+                     <li class="has-dropdown">
+                        <a href="products.html" id="navProducts" class="active">Products <i class="fa-solid fa-chevron-down"></i></a>
+                        <!-- Mega Menu -->
+                        <div class="mega-menu">
+                            <div class="mega-content">
+                                <div class="mega-column">
+                                    <ul id="megaMenuCategories">
+                                        <!-- Populated via JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li><a href="products.html?series=Solar">Solar Pump Series</a></li>
+                    <li><a href="products.html?category=DC Series">DC Series</a></li>
+                    <li><a href="contact.html" id="navContact">Contact</a></li>
+                </ul>
+
+                <div class="nav-actions">
+                     <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search by model, HP, or application...">
+                        <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                    <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Title -->
+    <div class="page-header">
+        <div class="container">
+            <h1>PRODUCT CATALOG</h1>
+            <p>Explore our complete range of high-efficiency pumping solutions.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container products-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar-filter">
+            <h3>CATEGORIES</h3>
+            <ul class="category-list" id="sidebarCategories">
+                <!-- Populated via JS -->
+                 <li><a href="#" onclick="filterPageCategory('All'); return false;" class="active">All Products</a></li>
+            </ul>
+        </aside>
+
+        <!-- Product Grid -->
+        <main class="main-catalog">
+             <div class="product-grid" id="productGrid">
+                <div class="loading-spinner" style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--industrial-teal);"></i>
+                    <p>Loading Active Catalog...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+     <!-- Footer (Same as Index) -->
+    <footer class="mega-footer" id="footer-section">
+        <div class="container footer-grid">
+            <div class="footer-col col-info">
+                 <h4>CORPORATE OFFICE</h4>
+                <address>
+                    Varshini Industrries Pvt. Ltd.<br>
+                    1047/3, Bannariamman Nagar,<br>
+                    Kattur Street, Kalappatti,<br>
+                    Coimbatore - 641048<br>
+                    India <br><br>
+                    <strong>Email:</strong><br>
+                    <a href="mailto:info@varshiniindustrries.com" style="color:white; text-decoration:none;">info@varshiniindustrries.com</a><br>
+                    <a href="mailto:varshiniindustrries@gmail.com" style="color:white; text-decoration:none;">varshiniindustrries@gmail.com</a>
+                </address>
+                <div class="footer-socials">
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>PRODUCTS</h4>
+                <ul>
+                    <li><a href="products.html?category=Self-Priming Monoblock Pumps">Self-Priming Monoblocks</a></li>
+                    <li><a href="products.html?category=Centrifugal Monoblock Pumps">Centrifugal Monoblocks</a></li>
+                    <li><a href="products.html?category=Supersuction Pumps">Supersuction Pumps</a></li>
+                    <li><a href="products.html?category=Openwell Submersible Pumps">Openwell Submersibles</a></li>
+                    <li><a href="products.html?category=Borewell Submersible Pumps">Borewell Submersibles</a></li>
+                    <li><a href="products.html?category=Shallow Well Pumps">Shallow Well Pumps</a></li>
+                    <li><a href="products.html?category=Mini Booster Pumps">Mini Booster Pumps</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>QUICK LINKS</h4>
+                <ul>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html">Admin Login</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <!-- Newsletter Removed -->
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="copyright">&copy; 2026 Varshini Industrries. All Rights Reserved.</div>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- 7. Floating Action Buttons -->
+    <div class="floating-actions">
+        <!-- Cart Float -->
+        <a href="#" class="float-btn float-cart" id="cartFloat">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-count" id="cartCount">0</span>
+        </a>
+    </div>
+
+    <!-- Mobile Bottom Navigation (App Style) -->
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="bottom-nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavCats">
+            <i class="fa-solid fa-grip"></i>
+            <span>Categories</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavSearch">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        <a href="contact.html" class="bottom-nav-item">
+            <i class="fa-solid fa-user"></i>
+            <span>Contact</span>
+        </a>
+    </nav>
+
+    <!-- Full Screen Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-overlay-header">
+            <div class="logo">
+                <img src="Logo.jpeg" alt="Logo" style="height: 40px;">
+            </div>
+            <button class="close-search-overlay" id="closeSearchOverlay"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="search-overlay-content">
+            <div class="search-overlay-input-group">
+                <input type="text" id="overlaySearchInput" placeholder="What are you looking for?">
+                <button id="overlaySearchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div class="popular-searches">
+                <h4 class="popular-categories-title">TOP CATEGORIES</h4>
+                <div class="popular-tags">
+                    <a href="#" class="popular-tag" onclick="filterCategory('Self-Priming Monoblock Pumps')">Monoblocks</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Openwell Submersible Pumps')">Openwell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Borewell Submersible Pumps')">Borewell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Mini Booster Pumps')">Booster</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Solar')">Solar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar-overlay" id="cartOverlay"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Enquiry Cart</h3>
+            <button class="close-cart" id="closeCart"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Dynamic Items Here -->
+            <div class="empty-cart-msg">Your cart is empty.</div>
+        </div>
+        <div class="cart-footer">
+            <button class="btn-enquiry" id="btnEnquiry" onclick="sendEnquiry()">
+                <i class="fa-brands fa-whatsapp"></i> Send Enquiry
+            </button>
+        </div>
+    </div>
+    
+     <!-- Product Specs Modal -->
+    <div id="specsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic Content Loaded Here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Specific inline script to handle page init
+        // We override or extend the main script behavior
+        
+        // Wait for fetchPublicProducts to complete (it's async in script.js)
+        // But since we can't easily hook into that from here without modifying script.js significantly,
+        // we will rely on the fact that fetchPublicProducts calls populateMegaMenu.
+        // We will modify `script.js` to handle the product page logic more centrally.
+    </script>
+</body>
+</html>

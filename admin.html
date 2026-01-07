@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Varshini Industries | Admin Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-layer-group"></i> VARSHINI<span>IND</span>
+        </div>
+
+        <ul class="side-menu">
+            <li class="active" data-view="dashboard"><a href="#"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            </li>
+            <li data-view="products"><a href="#"><i class="fa-solid fa-box-open"></i> Product Catalog</a></li>
+            <li data-view="dealers">
+                <a href="#" class="flex-bw">
+                    <span><i class="fa-solid fa-users-gear"></i> Dealer Requests</span>
+                    <span class="badge">3 New</span>
+                </a>
+            </li>
+            <li data-view="leads"><a href="#"><i class="fa-solid fa-envelope-open-text"></i> Inquiries/Leads</a></li>
+            <li data-view="settings"><a href="#"><i class="fa-solid fa-sliders"></i> Settings</a></li>
+        </ul>
+
+        <div class="user-panel">
+            <div class="user-info">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div>
+                    <h4>Admin User</h4>
+                    <small>Super Admin</small>
+                </div>
+            </div>
+            <button class="logout-btn" onclick="window.location.href='index.html'"><i
+                    class="fa-solid fa-power-off"></i></button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="admin-header">
+            <button id="sidebarToggle" class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+            <h2>Dashboard Overview</h2>
+            <div class="date-display" id="dateDisplay">October 26, 2026</div>
+        </header>
+
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="admin-view">
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- VIEW: PRODUCTS -->
+        <div id="view-products" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Product Management</h3>
+                    <button class="btn btn-primary" onclick="openAddProductModal()"><i class="fa-solid fa-plus"></i> Add
+                        New Pump</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Model Name</th>
+                                <th>HP / Spec</th>
+                                <th>Price (INR)</th>
+                                <th>Stock Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: LEADS -->
+        <div id="view-leads" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Recent Leads (Quick View)</h3>
+                    <button class="btn btn-outline">View All</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table plain">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Client Name</th>
+                                <th>Interested In</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: DEALERS (Placeholder) -->
+        <div id="view-dealers" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Dealer Requests</h3>
+                </div>
+                <div style="padding: 40px; text-align: center; color: #888;">
+                    <i class="fa-solid fa-users-gear" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <p>New Dealer Application module coming soon.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: SETTINGS (Placeholder) -->
+        <div id="view-settings" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>System Settings</h3>
+                </div>
+                <form onsubmit="event.preventDefault(); alert('Settings Saved!');">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Site Name</label>
+                        <input type="text" value="Varshini Industries"
+                            style="padding: 10px; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Admin Email</label>
+                        <input type="email" value="admin@varshini-ind.com"
+                            style="padding: 10px; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                    <button class="btn btn-primary">Save Changes</button>
+                </form>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Add Product Modal -->
+    <div class="modal-overlay" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Pump</h3>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="addProductForm">
+                <input type="hidden" name="id" id="productId">
+                <div class="form-group">
+                    <label>Model Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Titan V6-500">
+                </div>
+                <div class="form-group">
+                    <label>Series / Category</label>
+                    <input type="text" name="series" required placeholder="e.g. Stainless Series">
+                </div>
+                <div class="form-group">
+                    <label>HP / Specs</label>
+                    <input type="text" name="hp" required placeholder="e.g. 5.0 HP">
+                </div>
+                <div class="form-group">
+                    <label>Price (INR)</label>
+                    <input type="text" name="price" required placeholder="e.g. 18,500">
+                </div>
+                <div class="form-group">
+                    <label>Stock Status</label>
+                    <select name="stock">
+                        <option value="In Stock">In Stock</option>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Image Filename</label>
+                    <input type="text" name="image" placeholder="Default: titan_pump_v6.png">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+
+</html>

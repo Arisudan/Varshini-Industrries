@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Varshini Industries | Industrial Pumping Solutions</title>
+    <meta name="description"
+        content="Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.">
+
+    <!-- Google Fonts: Roboto Condensed & Open Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto+Condensed:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="styles.css?v=2.0">
+</head>
+
+<body>
+
+    <!-- 1. The "Dual-Tier" Header -->
+    <header class="main-header">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="container top-bar-flex">
+                <div class="support-info">
+                    <a href="mailto:info@varshiniindustrries.com" class="top-contact-link">
+                        <i class="fa-regular fa-envelope"></i> info@varshiniindustrries.com
+                    </a>
+                    <a href="tel:+918047838824" class="top-contact-link">
+                        <i class="fa-solid fa-phone"></i> +91-8047838824
+                    </a>
+                </div>
+                <div class="top-links">
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-youtube"></i></a>
+                    <span style="opacity: 0.3; margin: 0 10px;">|</span>
+                    <a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin</a>
+                    <a href="#"><i class="fa-solid fa-file-pdf"></i> Catalog</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navbar -->
+        <nav class="navbar" id="navbar">
+            <div class="container nav-flex">
+                <a href="#" class="logo">
+                    <img src="Logo.jpeg" alt="Varshini Industrries Logo" class="logo-image">
+                </a>
+
+                <ul class="nav-links">
+                    <li><a href="index.html" class="active">Home</a></li>
+
+                    <li class="has-dropdown">
+                        <a href="#products-section" id="navProducts">Products <i
+                                class="fa-solid fa-chevron-down"></i></a>
+                        <!-- Mega Menu -->
+                        <div class="mega-menu">
+                            <div class="mega-content">
+                                <div class="mega-column">
+
+                                    <ul id="megaMenuCategories">
+                                        <!-- Populated via JS -->
+                                    </ul>
+                                </div>
+                                <!-- Removed Featured Series and Highlight Box -->
+                            </div>
+                        </div>
+                    </li>
+
+                    <li><a href="#" onclick="filterProducts('Solar'); return false;">Solar Pump Series</a></li>
+                    <li><a href="#" onclick="filterCategory('Micro Motors'); return false;">DC Series</a></li>
+                    <li><a href="contact.html" id="navContact">Contact</a></li>
+
+                </ul>
+
+                <div class="nav-actions">
+                    <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- 2. The "Parametric Search" Hero Section -->
+    <section class="hero-section">
+        <div class="hero-slider">
+            <!-- Slide 1: Original Hero -->
+            <div class="hero-slide active">
+                <div class="hero-bg">
+                    <img src="assets/Home/Home Animation.png" alt="Home Animation">
+                </div>
+            </div>
+
+            <!-- Slide 2: Animation 1 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 1.png" alt="Animation 1">
+                </div>
+            </div>
+
+            <!-- Slide 3: Animation 2 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 2.png" alt="Animation 2">
+                </div>
+            </div>
+
+            <!-- Slide 4: Animation 3 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 3.png" alt="Animation 3">
+                </div>
+            </div>
+
+            <!-- Slide 5: Animation 4 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 4.png" alt="Animation 4">
+                </div>
+            </div>
+
+            <!-- Slide 6: Animation 5 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 5.png" alt="Animation 5">
+                </div>
+            </div>
+
+            <!-- Slide 7: Animation 6 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 6.png" alt="Animation 6">
+                </div>
+            </div>
+
+            <!-- Slide 8: Animation 7 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 7.png" alt="Animation 7">
+                </div>
+            </div>
+
+            <!-- Slide 9: Animation 8 -->
+            <div class="hero-slide">
+                <div class="hero-bg">
+                    <img src="assets/Home/Animation 8.jpeg" alt="Animation 8">
+                </div>
+            </div>
+
+            <!-- Slider Controls -->
+            <button class="slider-arrow prev-arrow" id="prevSlide"><i class="fa-solid fa-chevron-left"></i></button>
+            <button class="slider-arrow next-arrow" id="nextSlide"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+    </section>
+
+    <section class="finder-section">
+        <!-- Modern Gradient Background Elements -->
+        <div class="gradient-background">
+            <div class="gradient-sphere sphere-1"></div>
+            <div class="gradient-sphere sphere-2"></div>
+            <div class="gradient-sphere sphere-3"></div>
+            <div class="glow"></div>
+            <div class="grid-overlay"></div>
+            <div class="noise-overlay"></div>
+            <div class="particles-container" id="finder-particles"></div>
+        </div>
+
+        <div class="container" style="position: relative; z-index: 10;">
+            <div class="quick-finder-bar">
+                <div class="finder-label">
+                    <h3><i class="fa-solid fa-filter"></i> Quick Pump Finder</h3>
+                    <p>Find the perfect pump for your specific needs in seconds.</p>
+                </div>
+                <form class="finder-form-inline" id="finderForm">
+                    <div class="form-group-inline">
+                        <label>Application</label>
+                        <select id="appSelect">
+                            <option value="agri">Agriculture</option>
+                            <option value="domestic">Domestic</option>
+                            <option value="industrial">Industrial</option>
+                        </select>
+                    </div>
+                    <div class="form-group-inline">
+                        <label>Flow (LPH)</label>
+                        <input type="number" id="finderFlow" placeholder="e.g. 1000">
+                    </div>
+                    <div class="form-group-inline">
+                        <label>Head (m)</label>
+                        <input type="number" id="finderHead" placeholder="e.g. 30">
+                    </div>
+                    <button type="submit" class="btn btn-action" id="findBtn">FIND MY PUMP</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.6 Manufacturer Intro & Stats -->
+    <section class="manufacturer-intro">
+        <div class="container">
+            <div class="intro-flex">
+                <div class="intro-text-col">
+                    <span class="intro-tagline">Excellence in Engineering</span>
+                    <h2>High Quality Pump Manufacturer</h2>
+
+                    <div class="product-list-tags" style="margin-bottom: 25px;">
+                        <span>SELFPRIMING MONOBLOCK PUMPS</span>
+                        <span>SUPERSUCION PUMPS</span>
+                        <span>CENTRIFUGAL MONOBLOCK PUMPS</span>
+                        <span>OPENWELL SUBMERSIBLE PUMPS</span>
+                        <span>BOREWELL SUBMERSIBLE PUMPS</span>
+                        <span>SOLAR PUMPS</span>
+                        <span>DC PUMPS</span>
+                        <span>MINIBOOSTER PUMPS</span>
+                    </div>
+
+                    <p class="intro-description">
+                        Varshini Industrries is a premier manufacturer of high-efficiency pumping systems. We specialize
+                        in delivering robust, durable, and technologically advanced solutions for diverse industrial,
+                        agricultural, and residential applications. Our commitment to quality ensures that every pump we
+                        build meets the highest standards of performance and reliability.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Counters Section -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fa-solid fa-pump-soap"></i></div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="15">0</span>
+                        <span class="stat-label">Products</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fa-solid fa-users-gear"></i></div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="25">0</span>
+                        <span class="stat-label">Happy Customer</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fa-solid fa-building-user"></i></div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="100000">0</span>
+                        <span class="stat-label">Employees</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fa-solid fa-award"></i></div>
+                    <div class="stat-content">
+                        <span class="stat-number" data-target="50">0</span>
+                        <span class="stat-label">Years of Experience</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2.7 Leading Brands Section -->
+    <section class="brands-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>SOME OF OUR LEADING BRANDS</h2>
+                <div class="title-bar" style="margin: 0 auto;"></div>
+            </div>
+            <div class="brands-placeholder">
+                <p>Leading Brand Logos will be displayed here</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Product Series Showcase (Grid Layout) -->
+    <section class="section product-showcase" id="products-section">
+        <div class="container">
+            <div class="manufacture-header">
+                <h4>SOME OF THE PRODUCTS</h4>
+                <h2>WE MANUFACTURE</h2>
+                <p class="manufacture-desc">
+                    Explore our engineered range of high-performance pumps designed for maximum efficiency and long-term
+                    durability.
+                </p>
+            </div>
+
+            <!-- ... category grid ... -->
+            <!-- (skipping for brevity in search, just ensuring context match) -->
+            <!-- Only replacing the header part is cleaner if I can target it -->
+
+
+            <!-- Category Grid (Static Layout based on Reference) -->
+            <div class="category-grid-display">
+                <!-- Card 1 -->
+                <div class="cat-display-card" onclick="filterCategory('Self-Priming Monoblock Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Self Priming Pumps.png" alt="Self Priming">
+                    </div>
+                    <div class="cat-btn-label">SELF PRIMING PUMPS</div>
+                </div>
+                <!-- Card 2 -->
+                <div class="cat-display-card" onclick="filterCategory('Centrifugal Monoblock Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Centrifugal Pumps.png" alt="Centrifugal">
+                    </div>
+                    <div class="cat-btn-label">CENTRIFUGAL PUMPS</div>
+                </div>
+                <!-- Card 3 -->
+                <div class="cat-display-card" onclick="filterCategory('Supersuction Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Super Suction Pumps.png" alt="Supersuction">
+                    </div>
+                    <div class="cat-btn-label">SUPERSUCTION PUMPS</div>
+                </div>
+                <!-- Card 4 -->
+                <div class="cat-display-card" onclick="filterCategory('Openwell Submersible Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Openwell Pumps.png" alt="Openwell">
+                    </div>
+                    <div class="cat-btn-label">OPENWELL PUMPS</div>
+                </div>
+                <!-- Card 5 (Shallow Well) -->
+                <div class="cat-display-card" onclick="filterCategory('Shallow Well Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Shallow Well Pumps.png" alt="Shallow Well">
+                    </div>
+                    <div class="cat-btn-label">SHALLOW WELL PUMPS</div>
+                </div>
+                <!-- Card 6 (Booster) -->
+                <div class="cat-display-card" onclick="filterCategory('Mini Booster Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Mini Booster Pumps.png" alt="Booster">
+                    </div>
+                    <div class="cat-btn-label">MINI BOOSTER PUMPS</div>
+                </div>
+                <!-- Card 5 -->
+                <div class="cat-display-card" onclick="filterCategory('Borewell Submersible Pumps')">
+                    <div class="cat-img-bg">
+                        <img src="assets/Home/Borewell Pumps.png" alt="Borewell">
+                    </div>
+                    <div class="cat-btn-label">BOREWELL PUMPS</div>
+                </div>
+            </div>
+
+
+        </div>
+        </div>
+    </section>
+
+    <!-- 3.1 Our Services -->
+    <section class="services-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>OUR SERVICES</h2>
+                <div class="title-bar" style="margin: 0 auto;"></div>
+            </div>
+            <div class="services-grid">
+                <div class="service-card reveal-on-scroll">
+                    <div class="service-icon"><i class="fa-solid fa-gears"></i></div>
+                    <h3>Custom Pump Design</h3>
+                    <p>Tailored pumping solutions developed to meet specific industrial flow and head requirements with
+                        precision engineering.</p>
+                </div>
+                <div class="service-card reveal-on-scroll">
+                    <div class="service-icon"><i class="fa-solid fa-headset"></i></div>
+                    <h3>24/7 Technical Support</h3>
+                    <p>Round-the-clock expert assistance for troubleshooting, selection guidance, and emergency system
+                        diagnostics.</p>
+                </div>
+                <div class="service-card reveal-on-scroll">
+                    <div class="service-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    <h3>On-Site Maintenance</h3>
+                    <p>Professional field service and preventive maintenance programs to ensure your pumping systems
+                        operate at peak efficiency.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3a. Applications Section -->
+    <section class="section applications-section" id="applications-section">
+        <div class="container">
+            <div class="section-title">
+                <h2>APPLICATIONS</h2>
+                <div class="title-bar"></div>
+            </div>
+            <div class="icon-grid">
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-wheat-awn"></i></div>
+                    <h4>Agriculture</h4>
+                    <p>High-discharge pumps for efficient irrigation.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-industry"></i></div>
+                    <h4>Industrial</h4>
+                    <p>Robust solutions for factories and chemical plants.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-house-chimney"></i></div>
+                    <h4>Residential</h4>
+                    <p>Silent and pressure-boosting pumps for homes.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-fire-extinguisher"></i></div>
+                    <h4>Fire Fighting</h4>
+                    <p>Reliable high-pressure systems for safety.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3b. Support Section -->
+    <section class="section support-section bg-light" id="support-section">
+        <div class="container" style="text-align: center;">
+            <div class="section-title">
+                <h2>CUSTOMER SUPPORT</h2>
+                <div class="title-bar" style="margin: 0 auto 20px;"></div>
+            </div>
+            <p style="max-width: 600px; margin: 0 auto 30px;">
+                Need help choosing the right pump or require service? Our technical team is here to assist you 24/7.
+            </p>
+            <div class="hero-btns" style="justify-content: center;">
+                <a href="#about-section" class="btn btn-primary">Contact Support</a>
+                <a href="#" class="btn btn-outline"
+                    style="border-color:var(--titan-blue); color:var(--titan-blue);">Download Manuals</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. "Why TitanFlow" (Icon Grid) -->
+    <section class="section why-titan bg-light">
+        <div class="container">
+            <div class="icon-grid">
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-gem"></i></div>
+                    <h4>Copper Rotor Technology</h4>
+                    <p>100% pure copper rotors for superior conductivity and lower heat generation.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h4>Anti-Rust Coating</h4>
+                    <p>CED coating process ensuring 10x longer life against corrosion.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-certificate"></i></div>
+                    <h4>ISO 9001 Certified</h4>
+                    <p>World-class quality management systems monitoring every production stage.</p>
+                </div>
+                <div class="icon-box">
+                    <div class="icon-circle"><i class="fa-solid fa-calendar-check"></i></div>
+                    <h4>2-Year Warranty</h4>
+                    <p>Industry leading drop-off to drop-off warranty support.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 6. Mega Footer -->
+    <footer class="mega-footer" id="footer-section">
+        <div class="container footer-grid">
+            <div class="footer-col col-info">
+                <h4>CORPORATE OFFICE</h4>
+                <address>
+                    Varshini Industrries Pvt. Ltd.<br>
+                    1047/3, Bannariamman Nagar,<br>
+                    Kattur Street, Kalappatti,<br>
+                    Coimbatore - 641048<br>
+                    India <br><br>
+                    <strong>Email:</strong><br>
+                    <a href="mailto:info@varshiniindustrries.com"
+                        style="color:white; text-decoration:none;">info@varshiniindustrries.com</a><br>
+                    <a href="mailto:varshiniindustrries@gmail.com"
+                        style="color:white; text-decoration:none;">varshiniindustrries@gmail.com</a>
+                </address>
+                <div class="footer-socials">
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>PRODUCTS</h4>
+                <ul>
+                    <li><a href="products.html?category=Self-Priming Monoblock Pumps">Self-Priming Monoblocks</a></li>
+                    <li><a href="products.html?category=Centrifugal Monoblock Pumps">Centrifugal Monoblocks</a></li>
+                    <li><a href="products.html?category=Supersuction Pumps">Supersuction Pumps</a></li>
+                    <li><a href="products.html?category=Openwell Submersible Pumps">Openwell Submersibles</a></li>
+                    <li><a href="products.html?category=Borewell Submersible Pumps">Borewell Submersibles</a></li>
+                    <li><a href="products.html?category=Shallow Well Pumps">Shallow Well Pumps</a></li>
+                    <li><a href="products.html?category=Mini Booster Pumps">Mini Booster Pumps</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>QUICK LINKS</h4>
+                <ul>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html">Admin Login</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <!-- Newsletter Removed -->
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="copyright">&copy; 2026 Varshini Industrries. All Rights Reserved.</div>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 7. Floating Action Buttons -->
+    <div class="floating-actions">
+        <!-- Cart Float -->
+        <a href="#" class="float-btn float-cart" id="cartFloat">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-count" id="cartCount">0</span>
+        </a>
+    </div>
+
+    <!-- Mobile Bottom Navigation (App Style) -->
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="bottom-nav-item active">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavCats">
+            <i class="fa-solid fa-grip"></i>
+            <span>Categories</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavSearch">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        <a href="contact.html" class="bottom-nav-item">
+            <i class="fa-solid fa-user"></i>
+            <span>Contact</span>
+        </a>
+    </nav>
+
+    <!-- Full Screen Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-overlay-header">
+            <div class="logo">
+                <img src="Logo.jpeg" alt="Logo" style="height: 40px;">
+            </div>
+            <button class="close-search-overlay" id="closeSearchOverlay"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="search-overlay-content">
+            <div class="search-overlay-input-group">
+                <input type="text" id="overlaySearchInput" placeholder="What are you looking for?">
+                <button id="overlaySearchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div class="popular-searches">
+                <h4 class="popular-categories-title">TOP CATEGORIES</h4>
+                <div class="popular-tags">
+                    <a href="#" class="popular-tag"
+                        onclick="filterCategory('Self-Priming Monoblock Pumps')">Monoblocks</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Openwell Submersible Pumps')">Openwell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Borewell Submersible Pumps')">Borewell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Mini Booster Pumps')">Booster</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Solar')">Solar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar-overlay" id="cartOverlay"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Enquiry Cart</h3>
+            <button class="close-cart" id="closeCart"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Dynamic Items Here -->
+            <div class="empty-cart-msg">Your cart is empty.</div>
+        </div>
+        <div class="cart-footer">
+            <button class="btn-enquiry" id="btnEnquiry" onclick="sendEnquiry()">
+                <i class="fa-brands fa-whatsapp"></i> Send Enquiry
+            </button>
+        </div>
+    </div>
+
+    <!-- Product Specs Modal -->
+    <div id="specsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic Content Loaded Here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=2"></script>
+</body>
+
+</html>
