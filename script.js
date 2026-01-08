@@ -182,23 +182,20 @@ let allProducts = [];
 
 async function fetchPublicProducts() {
     try {
-        let res;
-        try {
-            res = await fetch('/api/public/products');
-            if (res.ok) {
-                allProducts = await res.json();
-            } else {
-                // Fallback for GitHub Pages or static hosting
-                console.log('API not found, falling back to local db.json');
-                const fallbackRes = await fetch('./db.json');
-                const dbData = await fallbackRes.json();
-                allProducts = dbData.products;
-            }
-        } catch (fetchErr) {
-            console.warn('Initial fetch failed, trying local db.json:', fetchErr);
-            const fallbackRes = await fetch('./db.json');
-            const dbData = await fallbackRes.json();
-            allProducts = dbData.products;
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
+        const fetchUrl = isLocal ? '/api/public/products' : './db.json';
+
+        console.log(`Fetching products from: ${fetchUrl}`);
+        const res = await fetch(fetchUrl);
+
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const data = await res.json();
+        // If it was db.json, it's an object with products array
+        allProducts = Array.isArray(data) ? data : (data.products || []);
+
+        if (allProducts.length === 0) {
+            console.warn('No products found in data source');
         }
 
         populateMegaMenu(allProducts);
