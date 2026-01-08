@@ -823,11 +823,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (index >= slides.length) index = 0;
             if (index < 0) index = slides.length - 1;
 
+            const nextIndex = (index + 1) % slides.length;
+
+            // Preload Current and Next slides
+            preloadSlideImage(slides[index]);
+            preloadSlideImage(slides[nextIndex]);
+
             // Remove active from all
             slides.forEach(slide => slide.classList.remove('active'));
             // Activate new
             slides[index].classList.add('active');
             currentSlide = index;
+        }
+
+        function preloadSlideImage(slide) {
+            const img = slide.querySelector('img');
+            if (img && img.dataset.src) {
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+            }
         }
 
         function nextSlide() {
@@ -847,8 +861,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 5000);
         }
 
-        // Initialize Auto Slide
-        resetInterval();
+        // Preload first two slides immediately
+        showSlide(0);
 
         // Event Listeners
         if (nextBtn) nextBtn.addEventListener('click', nextSlide);
