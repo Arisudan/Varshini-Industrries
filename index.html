@@ -18,7 +18,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=16">
 </head>
 
 <body>
@@ -180,20 +180,18 @@
                 </div>
                 <form class="finder-form-inline" id="finderForm">
                     <div class="form-group-inline">
-                        <label>Application</label>
-                        <select id="appSelect">
-                            <option value="agri">Agriculture</option>
-                            <option value="domestic">Domestic</option>
-                            <option value="industrial">Industrial</option>
+                        <label>PIPE SIZE</label>
+                        <select id="finderPipeSize">
+                            <option value="">All Sizes</option>
+                            <!-- Populated via JS -->
                         </select>
                     </div>
                     <div class="form-group-inline">
-                        <label>Flow (LPH)</label>
-                        <input type="number" id="finderFlow" placeholder="e.g. 1000">
-                    </div>
-                    <div class="form-group-inline">
-                        <label>Head (m)</label>
-                        <input type="number" id="finderHead" placeholder="e.g. 30">
+                        <label>HP / KW</label>
+                        <select id="finderHpKw">
+                            <option value="">All Ratings</option>
+                            <!-- Populated via JS -->
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-action" id="findBtn">FIND MY PUMP</button>
                 </form>
@@ -203,7 +201,14 @@
 
     <!-- 2.6 Manufacturer Intro & Stats -->
     <section class="manufacturer-intro">
-        <div class="container">
+        <!-- New Dynamic Background -->
+        <div class="intro-bg-elements">
+            <div class="intro-blob intro-blob-1"></div>
+            <div class="intro-blob intro-blob-2"></div>
+            <div class="intro-blob intro-blob-3"></div>
+            <div class="intro-grid-pattern"></div>
+        </div>
+        <div class="container" style="position: relative; z-index: 2;">
             <div class="intro-flex">
                 <div class="intro-text-col">
                     <span class="intro-tagline">Excellence in Engineering</span>
@@ -270,8 +275,57 @@
                 <h2>SOME OF OUR LEADING BRANDS</h2>
                 <div class="title-bar" style="margin: 0 auto;"></div>
             </div>
-            <div class="brands-placeholder">
-                <p>Leading Brand Logos will be displayed here</p>
+            <div class="brands-slider-wrapper">
+                <div class="brands-track">
+                    <!-- First Set of Brands -->
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Aquatech Water Pumps.png" alt="Sharp Aquatech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Flowtech Water Pumps.png" alt="Sharp Flowtech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Champ.png" alt="Sharp Champ">
+                        </div>
+                    </div>
+                    <!-- Duplicate Set for Seamless Loop -->
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Aquatech Water Pumps.png" alt="Sharp Aquatech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Flowtech Water Pumps.png" alt="Sharp Flowtech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Champ.png" alt="Sharp Champ">
+                        </div>
+                    </div>
+                    <!-- Triplicate Set for even smoother loop on large screens -->
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Aquatech Water Pumps.png" alt="Sharp Aquatech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Flowtech Water Pumps.png" alt="Sharp Flowtech Water Pumps">
+                        </div>
+                    </div>
+                    <div class="brand-item">
+                        <div class="brand-inner">
+                            <img src="assets/Home/Sharp Champ.png" alt="Sharp Champ">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -356,80 +410,43 @@
         <div class="container">
             <div class="section-title">
                 <h2>OUR SERVICES</h2>
-                <div class="title-bar" style="margin: 0 auto;"></div>
+                <div class="title-bar" style="margin: 0 auto 20px;"></div>
+                <p
+                    style="text-align: center; max-width: 900px; margin: 0 auto 50px; color: #ffffff; font-size: 1.2rem; line-height: 1.8; font-weight: 400; opacity: 0.95;">
+                    Headquartered in Coimbatore, India, we provide premium pump manufacturing services to a global
+                    clientele.
+                    Each pump is crafted by our team of expert machinists and mechanical engineers, ensuring every
+                    customer
+                    requirement is met with master-level engineering and precision.
+                </p>
             </div>
-            <div class="services-grid">
+            <div class="services-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                 <div class="service-card reveal-on-scroll">
-                    <div class="service-icon"><i class="fa-solid fa-gears"></i></div>
-                    <h3>Custom Pump Design</h3>
-                    <p>Tailored pumping solutions developed to meet specific industrial flow and head requirements with
-                        precision engineering.</p>
+                    <div class="service-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+                    <h3>Customer Commitment</h3>
+                    <p>We address our Customer inquiries with the same degree of effort and commitment.</p>
                 </div>
                 <div class="service-card reveal-on-scroll">
                     <div class="service-icon"><i class="fa-solid fa-headset"></i></div>
-                    <h3>24/7 Technical Support</h3>
-                    <p>Round-the-clock expert assistance for troubleshooting, selection guidance, and emergency system
-                        diagnostics.</p>
+                    <h3>Expert Support</h3>
+                    <p>To deliver expertise, technical support at any time, to ensure customer satisfaction.</p>
                 </div>
                 <div class="service-card reveal-on-scroll">
-                    <div class="service-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                    <h3>On-Site Maintenance</h3>
-                    <p>Professional field service and preventive maintenance programs to ensure your pumping systems
-                        operate at peak efficiency.</p>
+                    <div class="service-icon"><i class="fa-solid fa-industry"></i></div>
+                    <h3>Premier Manufacturing</h3>
+                    <p>Outstanding service and dedication via ongoing enhancement. To thrive as a premier Pump
+                        manufacturing firm in India.</p>
+                </div>
+                <div class="service-card reveal-on-scroll">
+                    <div class="service-icon"><i class="fa-solid fa-award"></i></div>
+                    <h3>Excellence & Support</h3>
+                    <p>We are recognized for our excellence and customer support to our valued clients.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- 3a. Applications Section -->
-    <section class="section applications-section" id="applications-section">
-        <div class="container">
-            <div class="section-title">
-                <h2>APPLICATIONS</h2>
-                <div class="title-bar"></div>
-            </div>
-            <div class="icon-grid">
-                <div class="icon-box">
-                    <div class="icon-circle"><i class="fa-solid fa-wheat-awn"></i></div>
-                    <h4>Agriculture</h4>
-                    <p>High-discharge pumps for efficient irrigation.</p>
-                </div>
-                <div class="icon-box">
-                    <div class="icon-circle"><i class="fa-solid fa-industry"></i></div>
-                    <h4>Industrial</h4>
-                    <p>Robust solutions for factories and chemical plants.</p>
-                </div>
-                <div class="icon-box">
-                    <div class="icon-circle"><i class="fa-solid fa-house-chimney"></i></div>
-                    <h4>Residential</h4>
-                    <p>Silent and pressure-boosting pumps for homes.</p>
-                </div>
-                <div class="icon-box">
-                    <div class="icon-circle"><i class="fa-solid fa-fire-extinguisher"></i></div>
-                    <h4>Fire Fighting</h4>
-                    <p>Reliable high-pressure systems for safety.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- 3b. Support Section -->
-    <section class="section support-section bg-light" id="support-section">
-        <div class="container" style="text-align: center;">
-            <div class="section-title">
-                <h2>CUSTOMER SUPPORT</h2>
-                <div class="title-bar" style="margin: 0 auto 20px;"></div>
-            </div>
-            <p style="max-width: 600px; margin: 0 auto 30px;">
-                Need help choosing the right pump or require service? Our technical team is here to assist you 24/7.
-            </p>
-            <div class="hero-btns" style="justify-content: center;">
-                <a href="#about-section" class="btn btn-primary">Contact Support</a>
-                <a href="#" class="btn btn-outline"
-                    style="border-color:var(--titan-blue); color:var(--titan-blue);">Download Manuals</a>
-            </div>
-        </div>
-    </section>
 
     <!-- 4. "Why TitanFlow" (Icon Grid) -->
     <section class="section why-titan bg-light">
@@ -467,9 +484,9 @@
                 <h4>CORPORATE OFFICE</h4>
                 <address>
                     Varshini Industrries Pvt. Ltd.<br>
-                    1047/3, Bannariamman Nagar,<br>
-                    Kattur Street, Kalappatti,<br>
-                    Coimbatore - 641048<br>
+                    1047/3, BANNARIAMMAN NAGAR,<br>
+                    KATTUR STREET, KALAPPATTI,<br>
+                    COIMBATORE - 641048<br>
                     India <br><br>
                     <strong>Email:</strong><br>
                     <a href="mailto:info@varshiniindustrries.com"
@@ -605,7 +622,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=16"></script>
 </body>
 
 </html>

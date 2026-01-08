@@ -130,48 +130,37 @@ document.addEventListener('DOMContentLoaded', () => {
         finderForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
-            const flowInput = document.getElementById('finderFlow');
-            const headInput = document.getElementById('finderHead');
+            const pipeSize = document.getElementById('finderPipeSize').value;
+            const hpKw = document.getElementById('finderHpKw').value;
 
-            const reqFlow = parseFloat(flowInput.value) || 0;
-            const reqHead = parseFloat(headInput.value) || 0;
-
-            if (reqFlow <= 0 && reqHead <= 0) {
-                alert('Please enter a valid Flow Rate or Head Range.');
+            if (!pipeSize && !hpKw) {
+                alert('Please select a Pipe Size or HP / KW.');
                 return;
             }
 
             // Filter Logic
             const results = allProducts.filter(p => {
-                // If no specs, include generously? Or exclude? Let's include if name matches context or exclude.
-                // Better: Only include known good table data
                 if (!p.table_data) return false;
-
-                const heads = p.table_data.head_row_vals.map(Number).filter(n => !isNaN(n));
-                const flows = p.table_data.discharge_row_vals.map(Number).filter(n => !isNaN(n));
-
-                const maxHead = Math.max(...heads);
-                const maxFlow = Math.max(...flows);
-
-                // Simple check: Is the pump capable of AT LEAST this performance?
-                const headCapable = reqHead > 0 ? (maxHead >= reqHead) : true;
-                const flowCapable = reqFlow > 0 ? (maxFlow >= reqFlow) : true;
-
-                return headCapable && flowCapable;
+                const matchPipe = pipeSize ? (p.table_data.pipe_size === pipeSize) : true;
+                const matchHpKw = hpKw ? (p.table_data.hp_kw === hpKw) : true;
+                return matchPipe && matchHpKw;
             });
 
             if (results.length > 0) {
                 // If on products.html, render in place
                 if (window.location.pathname.includes('products.html')) {
                     renderPublicProducts(results);
-                    const pSec = document.getElementById('productGrid'); // OR products-section if it existed
+                    const pSec = document.getElementById('productGrid');
                     if (pSec) pSec.scrollIntoView({ behavior: 'smooth' });
                 } else {
                     // If on Home, redirect to products.html with query params
-                    window.location.href = `products.html?flow=${reqFlow}&head=${reqHead}`;
+                    const params = new URLSearchParams();
+                    if (pipeSize) params.set('pipe', pipeSize);
+                    if (hpKw) params.set('hpkw', hpKw);
+                    window.location.href = `products.html?${params.toString()}`;
                 }
             } else {
-                alert(`No pumps found capable of ${reqHead}m Head and ${reqFlow} LPH. Try lower values.`);
+                alert(`No pumps found matching those specifications. Try different options.`);
             }
         });
     }
@@ -199,37 +188,33 @@ async function fetchPublicProducts() {
         }
 
         populateMegaMenu(allProducts);
+        populateFinderSelects(allProducts);
 
-        // Check for URL Params (Category, Series, OR Flow/Head)
+        // Check for URL Params (Category, Series, OR Pipe/HP)
         const urlParams = new URLSearchParams(window.location.search);
         const categoryParam = urlParams.get('category');
         const seriesParam = urlParams.get('series');
-        const flowParam = parseFloat(urlParams.get('flow')) || 0;
-        const headParam = parseFloat(urlParams.get('head')) || 0;
+        const pipeParam = urlParams.get('pipe');
+        const hpkwParam = urlParams.get('hpkw');
 
         if (categoryParam) {
             filterCategory(categoryParam);
-
             // Hide Sidebar for DC Series (Micro Motors)
             if (categoryParam === 'Micro Motors') {
-                const sidebar = document.querySelector('.sidebar-filter'); // Fixed selector
-                const mainContent = document.querySelector('.products-layout'); // Fixed selector
+                const sidebar = document.querySelector('.sidebar-filter');
+                const mainContent = document.querySelector('.products-layout');
                 if (sidebar) sidebar.style.display = 'none';
                 if (mainContent) mainContent.style.gridTemplateColumns = '1fr';
             }
         } else if (seriesParam) {
-            filterProducts(seriesParam); // Reusing search/series filter
-        } else if (flowParam > 0 || headParam > 0) {
+            filterProducts(seriesParam);
+        } else if (pipeParam || hpkwParam) {
             // Apply Quick Finder Logic on Load
             const results = allProducts.filter(p => {
                 if (!p.table_data) return false;
-                const heads = p.table_data.head_row_vals.map(Number).filter(n => !isNaN(n));
-                const flows = p.table_data.discharge_row_vals.map(Number).filter(n => !isNaN(n));
-                const maxHead = Math.max(...heads);
-                const maxFlow = Math.max(...flows);
-                const headCapable = headParam > 0 ? (maxHead >= headParam) : true;
-                const flowCapable = flowParam > 0 ? (maxFlow >= flowParam) : true;
-                return headCapable && flowCapable;
+                const matchPipe = pipeParam ? (p.table_data.pipe_size === pipeParam) : true;
+                const matchHpKw = hpkwParam ? (p.table_data.hp_kw === hpkwParam) : true;
+                return matchPipe && matchHpKw;
             });
             renderPublicProducts(results);
         } else {
@@ -907,7 +892,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 9. Scroll & Entrance Animations ---
-    const revealElements = document.querySelectorAll('.icon-box, .cat-display-card, .section-title, .product-card');
+    // Include both hardcoded components and any elements that already have the class in HTML
+    const revealElements = document.querySelectorAll('.icon-box, .cat-display-card, .section-title, .product-card, .reveal-on-scroll');
     revealElements.forEach(el => el.classList.add('reveal-on-scroll'));
 
     const observerOptions = {
@@ -1067,3 +1053,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+function populateFinderSelects(products) {
+    const pipeSelect = document.getElementById('finderPipeSize');
+    const hpKwSelect = document.getElementById('finderHpKw');
+
+    if (!pipeSelect || !hpKwSelect) return;
+
+    // Save initial placeholder
+    const pipePlaceholder = pipeSelect.options[0].textContent;
+    const hpKwPlaceholder = hpKwSelect.options[0].textContent;
+
+    pipeSelect.innerHTML = `<option value="">${pipePlaceholder}</option>`;
+    hpKwSelect.innerHTML = `<option value="">${hpKwPlaceholder}</option>`;
+
+    const pipeSizes = [...new Set(products
+        .filter(p => p.table_data && p.table_data.pipe_size && p.table_data.pipe_size !== 'N/A')
+        .map(p => p.table_data.pipe_size))].sort();
+
+    const hpKwValues = [...new Set(products
+        .filter(p => p.table_data && p.table_data.hp_kw && p.table_data.hp_kw !== 'N/A')
+        .map(p => p.table_data.hp_kw))].sort();
+
+    pipeSizes.forEach(size => {
+        const opt = document.createElement('option');
+        opt.value = size;
+        opt.textContent = size;
+        pipeSelect.appendChild(opt);
+    });
+
+    hpKwValues.forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        hpKwSelect.appendChild(opt);
+    });
+}

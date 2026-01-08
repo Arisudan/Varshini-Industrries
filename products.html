@@ -18,7 +18,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=16">
     <style>
         /* Specific Styles for Products Page */
         .page-header {
@@ -207,6 +207,32 @@
     </div>
 
     <!-- Main Content -->
+    <div class="container" style="margin-bottom: 30px;">
+        <div class="quick-finder-bar">
+            <div class="finder-label">
+                <h3><i class="fa-solid fa-filter"></i> Quick Filter</h3>
+                <p>Narrow down by Pipe Size or Power in an instant.</p>
+            </div>
+            <form class="finder-form-inline" id="finderForm">
+                <div class="form-group-inline">
+                    <label>PIPE SIZE</label>
+                    <select id="finderPipeSize">
+                        <option value="">All Sizes</option>
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+                <div class="form-group-inline">
+                    <label>HP / KW</label>
+                    <select id="finderHpKw">
+                        <option value="">All Ratings</option>
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-action" id="findBtn">APPLY FILTER</button>
+            </form>
+        </div>
+    </div>
+
     <div class="container products-layout">
         <!-- Sidebar -->
         <aside class="sidebar-filter">
@@ -235,9 +261,9 @@
                  <h4>CORPORATE OFFICE</h4>
                 <address>
                     Varshini Industrries Pvt. Ltd.<br>
-                    1047/3, Bannariamman Nagar,<br>
-                    Kattur Street, Kalappatti,<br>
-                    Coimbatore - 641048<br>
+                    1047/3, BANNARIAMMAN NAGAR,<br>
+                    KATTUR STREET, KALAPPATTI,<br>
+                    COIMBATORE - 641048<br>
                     India <br><br>
                     <strong>Email:</strong><br>
                     <a href="mailto:info@varshiniindustrries.com" style="color:white; text-decoration:none;">info@varshiniindustrries.com</a><br>
@@ -370,7 +396,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=6"></script>
+    <script src="script.js?v=16"></script>
     <script>
         // Specific inline script to handle page init
         // We override or extend the main script behavior
