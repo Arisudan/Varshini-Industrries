@@ -774,49 +774,77 @@ img {
    2. Parametric Search Hero
 ------------------------------------------------------------------- */
 /* -------------------------------------------------------------------
-   2. Parametric Search Hero (Slider Enabled)
+   2. Parametric Search Hero - FORTIFIED ZONES
 ------------------------------------------------------------------- */
-.hero-section {
-    position: relative;
-    height: 750px;
-    /* Increased from 600px to prevent cropping of pump graphics */
-    background: #000;
-    overflow: hidden;
+
+/* ZONE 1: PC VIEW ONLY (1025px and up) - Vector-like scaling */
+@media screen and (min-width: 1025px) {
+    .hero-section {
+        position: relative;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1920 / 800;
+        min-height: 450px;
+        background: #000;
+        overflow: hidden;
+    }
+
+    .hero-slider {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .hero-slide {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1s ease-in-out, visibility 1s;
+        z-index: 1;
+    }
+
+    .hero-slide.active {
+        opacity: 1;
+        visibility: visible;
+        z-index: 2;
+    }
+
+    .hero-bg img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        z-index: 0;
+    }
+
+    .hero-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        z-index: 10;
+    }
 }
 
-.hero-slider {
-    position: relative;
-    width: 100%;
-    height: 100%;
-}
-
-.hero-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    /* Standard Premium Cross-Fade */
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 1s ease-in-out, visibility 1s;
-    z-index: 1;
-}
-
-.hero-slide.active {
-    opacity: 1;
-    visibility: visible;
-    z-index: 2;
-}
-
-/* Mobile Fallback / Optimization */
-@media (max-width: 900px) {
+/* ZONE 2: PHONE & TABLET VIEW ONLY (1024px and below) */
+@media screen and (max-width: 1024px) {
     .hero-section {
         height: auto;
         min-height: 0;
         aspect-ratio: auto;
         background: transparent;
+        position: relative;
+        width: 100%;
+        overflow: hidden;
     }
 
     .hero-slider {
@@ -824,12 +852,10 @@ img {
         height: auto;
         min-height: 0;
         display: block;
-        /* Standard block layout */
     }
 
     .hero-slide {
         display: none;
-        /* Hide inactive slides completely */
         position: relative;
         width: 100%;
         height: auto;
@@ -837,29 +863,11 @@ img {
         visibility: visible !important;
         z-index: 1;
         transition: none;
-        /* Instant cut for stability */
     }
 
     .hero-slide.active {
         display: block;
-        /* Show active slide naturally */
         z-index: 2;
-    }
-
-    .slider-arrow {
-        width: 40px !important;
-        height: 40px !important;
-        font-size: 1.2rem !important;
-        padding: 0 !important;
-        background: rgba(0, 0, 0, 0.5);
-    }
-
-    .prev-arrow {
-        left: 10px !important;
-    }
-
-    .next-arrow {
-        right: 10px !important;
     }
 
     .hero-bg,
@@ -870,23 +878,27 @@ img {
         display: block;
         object-fit: contain !important;
     }
+
+    .hero-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+        height: auto;
+        position: relative;
+        z-index: 10;
+    }
+
+    .slider-arrow {
+        width: 40px !important;
+        height: 40px !important;
+        background: rgba(0, 0, 0, 0.5);
+    }
 }
 
-/* Global / Desktop Image Styles */
+/* SHARED PROPERTIES (Safe alignment logic) */
 .hero-bg img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* Desktop: Cover to fill space */
-    z-index: 0;
-}
-
-/* Image Static (No Pan/Zoom/Move) - STRICT ENFORCEMENT */
-.hero-bg img,
-.hero-slide.active .hero-bg img {
     animation: none !important;
     transform: none !important;
     transition: none !important;
@@ -900,19 +912,6 @@ img {
     height: 100%;
     background: linear-gradient(90deg, rgba(5, 22, 38, 0.9) 0%, rgba(5, 22, 38, 0.7) 50%, rgba(5, 22, 38, 0.2) 100%);
     z-index: 1;
-    /* Changed from -1, sits on top of bg(0) */
-}
-
-/* Container for content needs to be relative to slide */
-.hero-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    /* Fill slide height */
-    position: relative;
-    z-index: 10;
 }
 
 
@@ -3334,29 +3333,63 @@ img {
 }
 
 /* -------------------------------------------------------------------
-   10. New Sections: Manufacturer Info, Stats, Brands, Services
+   10. New Sections: Manufacturer Info, Stats, Brands, Services - FORTIFIED ZONES
 ------------------------------------------------------------------- */
 
-/* Manufacturer Intro Section */
-.manufacturer-intro {
-    padding: 120px 0 80px;
-    background: #ffffff;
-    position: relative;
-    overflow: hidden;
+/* ZONE 1: PC VIEW ONLY (1025px and up) */
+@media screen and (min-width: 1025px) {
+    .manufacturer-intro {
+        padding: 120px 0 80px;
+        background: #ffffff;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .intro-bg-elements {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        overflow: hidden;
+        background: #0A2540;
+    }
+
+    .intro-flex {
+        display: flex;
+        gap: 60px;
+        align-items: center;
+        margin-bottom: 60px;
+        position: relative;
+        z-index: 10;
+    }
+
+    .intro-text-col h2 {
+        font-size: 2.8rem;
+        line-height: 1.2;
+    }
 }
 
-.intro-bg-elements {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-    overflow: hidden;
-    background: #0A2540;
-    /* Solid Deep Navy */
+/* ZONE 2: PHONE & TABLET VIEW ONLY (1024px and below) */
+@media screen and (max-width: 1024px) {
+    .manufacturer-intro {
+        padding: 60px 0;
+        background: #0A2540;
+        text-align: center;
+    }
+
+    .intro-flex {
+        flex-direction: column;
+        gap: 40px;
+    }
+
+    .intro-text-col h2 {
+        font-size: 2.2rem;
+    }
 }
 
+/* COMMON / SHARED (Base definitions) */
 .intro-blob {
     position: absolute;
     border-radius: 50%;
@@ -3372,25 +3405,6 @@ img {
     top: -100px;
     right: -100px;
     animation: blobMove1 20s infinite alternate-reverse ease-in-out;
-}
-
-.intro-blob-2 {
-    width: 300px;
-    height: 300px;
-    background: var(--primary-navy);
-    bottom: -50px;
-    left: -50px;
-    animation: blobMove2 25s infinite alternate ease-in-out;
-}
-
-.intro-blob-3 {
-    width: 250px;
-    height: 250px;
-    background: var(--industrial-teal);
-    top: 40%;
-    left: 20%;
-    animation: blobMove1 15s infinite alternate ease-in-out;
-    opacity: 0.1;
 }
 
 .intro-grid-pattern {
@@ -3415,43 +3429,7 @@ img {
     }
 }
 
-@keyframes blobMove2 {
-    0% {
-        transform: translate(0, 0) scale(1) rotate(0deg);
-    }
-
-    100% {
-        transform: translate(150px, -100px) scale(1.3) rotate(90deg);
-    }
-}
-
-
-
-.intro-flex {
-    display: flex;
-    gap: 60px;
-    align-items: center;
-    margin-bottom: 60px;
-}
-
-.intro-text-col {
-    flex: 1;
-}
-
-.intro-tagline {
-    color: var(--industrial-teal);
-    font-weight: 700;
-    font-size: 1rem;
-    display: block;
-    margin-bottom: 15px;
-}
-
-.intro-text-col h2 {
-    font-size: 2.8rem;
-    line-height: 1.2;
-    margin-bottom: 25px;
-    color: #ffffff;
-}
+/* Cleanup */
 
 .intro-description {
     font-size: 1.1rem;
@@ -3745,90 +3723,103 @@ img {
     border-radius: 10px;
 }
 
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 35px;
-    margin-top: 60px;
-}
 
-.service-card {
-    padding: 50px 40px;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 24px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
 
-.service-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 0;
-    background: linear-gradient(to top, rgba(0, 180, 216, 0.1), transparent);
-    transition: height 0.6s ease;
-    z-index: 1;
-}
+/* ZONE 1: SERVICES (PC) */
+@media screen and (min-width: 1025px) {
+    .services-section {
+        padding: 140px 0;
+        background: #051626;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
 
-.service-card:hover {
-    transform: translateY(-20px) scale(1.02);
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(0, 180, 216, 0.5);
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4),
-        inset 0 0 20px rgba(0, 180, 216, 0.1);
-}
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 35px;
+        margin-top: 60px;
+    }
 
-.service-card:hover::after {
-    height: 50%;
-}
+    .service-card {
+        padding: 50px 40px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
 
-.service-icon {
-    width: 90px;
-    height: 90px;
-    background: rgba(0, 180, 216, 0.1);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: var(--industrial-teal);
-    margin-bottom: 30px;
-    transition: all 0.5s ease;
-    position: relative;
-    z-index: 2;
-}
+    .service-card:hover {
+        transform: translateY(-20px) scale(1.02);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(0, 180, 216, 0.5);
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.4),
+            inset 0 0 20px rgba(0, 180, 216, 0.1);
+    }
 
-.service-card:hover .service-icon {
-    transform: rotateY(360deg) scale(1.1);
-    background: var(--industrial-teal);
-    color: white;
-    box-shadow: 0 0 30px rgba(0, 180, 216, 0.5);
-}
+    .service-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 0;
+        background: linear-gradient(to top, rgba(0, 180, 216, 0.1), transparent);
+        transition: height 0.6s ease;
+        z-index: 1;
+    }
 
-.service-card h3 {
-    margin-bottom: 18px;
-    font-size: 1.6rem;
-    color: white;
-    font-weight: 700;
-    position: relative;
-    z-index: 2;
-}
+    .service-card:hover::after {
+        height: 50%;
+    }
 
-.service-card p {
-    color: #94a3b8;
-    font-size: 1.05rem;
-    line-height: 1.7;
-    margin: 0;
-    position: relative;
-    z-index: 2;
+    .service-icon {
+        width: 90px;
+        height: 90px;
+        background: rgba(0, 180, 216, 0.1);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: var(--industrial-teal);
+        margin-bottom: 30px;
+        transition: all 0.5s ease;
+        position: relative;
+        z-index: 2;
+    }
+
+    .service-card:hover .service-icon {
+        transform: rotateY(360deg) scale(1.1);
+        background: var(--industrial-teal);
+        color: white;
+        box-shadow: 0 0 30px rgba(0, 180, 216, 0.5);
+    }
+
+    .service-card h3 {
+        margin-bottom: 18px;
+        font-size: 1.6rem;
+        color: white;
+        font-weight: 700;
+        position: relative;
+        z-index: 2;
+    }
+
+    .service-card p {
+        color: #94a3b8;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+    }
 }
 
 /* Entrance Animation Upgrade */
@@ -3843,7 +3834,8 @@ img {
     transform: translateY(0) scale(1);
 }
 
-@media (max-width: 900px) {
+/* ZONE 2: PHONE & TABLET VIEW ONLY (1024px and below) - Match User Image */
+@media screen and (max-width: 1024px) {
     .intro-flex {
         flex-direction: column;
         gap: 40px;
@@ -3853,12 +3845,65 @@ img {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .services-grid {
-        grid-template-columns: 1fr;
-    }
-
     .intro-text-col h2 {
         font-size: 2.2rem;
+    }
+
+    /* Target the OUR SERVICES section specifically for mobile with Card Layout */
+    .services-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        /* Tighter gap for cards */
+        padding: 0 15px;
+    }
+
+    .service-card {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+        padding: 30px 25px !important;
+        border-radius: 20px !important;
+        display: block !important;
+        text-align: left !important;
+        transform: none !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        opacity: 1 !important;
+    }
+
+    .service-card::after {
+        display: none !important;
+    }
+
+    .service-icon {
+        background: rgba(0, 180, 216, 0.15) !important;
+        width: 50px !important;
+        height: 50px !important;
+        border-radius: 12px !important;
+        font-size: 1.3rem !important;
+        color: #ffffff !important;
+        margin-bottom: 20px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 0 20px rgba(0, 180, 216, 0.2) !important;
+    }
+
+    .service-card h3 {
+        text-transform: uppercase;
+        color: var(--industrial-teal) !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 12px !important;
+        letter-spacing: 1.2px;
+    }
+
+    .service-card p {
+        color: #e2e8f0 !important;
+        font-size: 1.05rem !important;
+        line-height: 1.6 !important;
+        opacity: 0.95 !important;
     }
 }
 
