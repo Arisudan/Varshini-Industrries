@@ -182,8 +182,24 @@ let allProducts = [];
 
 async function fetchPublicProducts() {
     try {
-        const res = await fetch('/api/public/products');
-        allProducts = await res.json();
+        let res;
+        try {
+            res = await fetch('/api/public/products');
+            if (res.ok) {
+                allProducts = await res.json();
+            } else {
+                // Fallback for GitHub Pages or static hosting
+                console.log('API not found, falling back to local db.json');
+                const fallbackRes = await fetch('./db.json');
+                const dbData = await fallbackRes.json();
+                allProducts = dbData.products;
+            }
+        } catch (fetchErr) {
+            console.warn('Initial fetch failed, trying local db.json:', fetchErr);
+            const fallbackRes = await fetch('./db.json');
+            const dbData = await fallbackRes.json();
+            allProducts = dbData.products;
+        }
 
         populateMegaMenu(allProducts);
 
@@ -199,8 +215,8 @@ async function fetchPublicProducts() {
 
             // Hide Sidebar for DC Series (Micro Motors)
             if (categoryParam === 'Micro Motors') {
-                const sidebar = document.querySelector('.filter-sidebar');
-                const mainContent = document.querySelector('.products-content');
+                const sidebar = document.querySelector('.sidebar-filter'); // Fixed selector
+                const mainContent = document.querySelector('.products-layout'); // Fixed selector
                 if (sidebar) sidebar.style.display = 'none';
                 if (mainContent) mainContent.style.gridTemplateColumns = '1fr';
             }
@@ -224,8 +240,8 @@ async function fetchPublicProducts() {
             renderPublicProducts(allProducts);
         }
         // Populate Sidebar
-        const sidebar = document.getElementById('sidebarCategories');
-        if (sidebar) {
+        const sidebarList = document.getElementById('sidebarCategories');
+        if (sidebarList) {
             const categories = [...new Set(allProducts.map(p => p.category))];
             let sidebarHTML = `<li><a href="#" onclick="filterPageCategory('All'); return false;">All Products</a></li>`;
             CATEGORY_ORDER.forEach(cat => {
@@ -233,13 +249,13 @@ async function fetchPublicProducts() {
                     sidebarHTML += `<li><a href="#" onclick="filterPageCategory('${cat}'); return false;">${cat}</a></li>`;
                 }
             });
-            sidebar.innerHTML = sidebarHTML;
+            sidebarList.innerHTML = sidebarHTML;
         }
 
     } catch (err) {
         console.error('Error fetching products:', err);
         const grid = document.getElementById('productGrid');
-        if (grid) grid.innerHTML = '<p style="grid-column:1/-1; text-align:center;">Failed to load catalog. Please try again later.</p>';
+        if (grid) grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding: 50px;">Failed to load catalog. Please try again later.</p>';
     }
 }
 
