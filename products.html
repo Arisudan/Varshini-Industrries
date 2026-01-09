@@ -18,7 +18,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css?v=31">
+    <link rel="stylesheet" href="styles.css?v=32">
     <style>
         /* Specific Styles for Products Page */
         .page-header {
@@ -55,6 +55,16 @@
             display: flex;
             gap: 40px;
             padding-bottom: 80px;
+        }
+
+        @media (max-width: 900px) {
+            .products-layout {
+                flex-direction: column;
+            }
+            .sidebar-filter {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
         }
 
         .sidebar-filter {
@@ -398,7 +408,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=31"></script>
+    <script src="script.js?v=32"></script>
     <script>
         // Specific inline script to handle page init
         // We override or extend the main script behavior
