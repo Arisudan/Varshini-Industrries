@@ -444,8 +444,13 @@ img {
 }
 
 .top-contact-link:hover {
-    color: var(--industrial-teal);
+    color: var(--action-yellow);
+    /* Changed to yellow on hover */
     transform: translateX(3px);
+}
+
+.top-contact-link:hover i {
+    color: var(--action-yellow);
 }
 
 .social-link-top {
@@ -458,6 +463,20 @@ img {
 .social-link-top:hover {
     color: #ffffff;
     transform: translateY(-3px) scale(1.2);
+}
+
+.top-links a:not(.social-link-top) {
+    color: rgba(255, 255, 255, 0.9);
+    margin-left: 25px;
+    /* Added spacing */
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.3s;
+    font-size: 0.85rem;
+}
+
+.top-links a:not(.social-link-top):hover {
+    color: var(--action-yellow);
 }
 
 /* Modern Navbar */
