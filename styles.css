@@ -2784,7 +2784,24 @@ img {
     .nav-links li {
         width: 100%;
         border-bottom: 1px solid #f1f1f1;
-        padding-bottom: 10px;
+        padding-bottom: 0;
+        /* Remove padding from li, move to a */
+    }
+
+    .nav-links a {
+        display: block;
+        /* Full width click area */
+        width: 100%;
+        padding: 15px 0;
+        color: #333 !important;
+        /* Dark text for readability */
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .nav-links a:hover {
+        color: var(--industrial-teal) !important;
+        background: transparent;
     }
 
     /* Hide Desktop Search on Mobile as we'll use Full-Screen Search */
@@ -2821,6 +2838,22 @@ img {
     .category-grid-display {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
+    }
+
+    .cat-img-bg {
+        height: 150px;
+        /* Reduced height for mobile */
+    }
+
+    /* Mobile Form Optimization */
+    input,
+    select,
+    textarea,
+    button {
+        min-height: 48px;
+        /* Touch target size */
+        font-size: 16px !important;
+        /* Prevent iOS zoom */
     }
 
     /* 3. Font Scaling */
