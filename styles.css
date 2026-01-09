@@ -2777,9 +2777,116 @@ img {
     bottom: -15px;
 }
 
+/* New Key Specs Grid */
+.key-specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.spec-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.spec-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.spec-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-navy);
+}
+
+/* Performance Table Styling */
+.perf-data-container {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.perf-title {
+    font-size: 0.9rem;
+    color: var(--primary-navy);
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.perf-table-wrapper {
+    width: 100%;
+    /* Ensure it fits container */
+}
+
+.perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    color: #334155;
+    border: 1px solid #e2e8f0;
+}
+
+.perf-table th,
+.perf-table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.perf-table thead tr {
+    background: #f1f5f9;
+}
+
+.matrix-label {
+    background: var(--primary-navy);
+    color: white !important;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 80px;
+}
+
 /* Spacer for the overlapping buttons */
 .category-grid-display {
     padding-bottom: 30px;
+}
+
+/* Mobile Tweaks for Products */
+@media (max-width: 900px) {
+    .key-specs-grid {
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .spec-value {
+        font-size: 0.95rem;
+    }
+
+    .perf-table {
+        font-size: 0.75rem;
+    }
+
+    .perf-table th,
+    .perf-table td {
+        padding: 6px 4px;
+        /* Super compact padding */
+    }
+
+    .matrix-label {
+        width: 60px;
+        font-size: 0.7rem;
+    }
 }
 
 .section-divider {

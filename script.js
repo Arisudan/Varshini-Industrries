@@ -465,7 +465,6 @@ function createProductCardHtml(p) {
             <li><i class="fa-solid fa-check"></i> Residential & Commercial</li>
             <li><i class="fa-solid fa-check"></i> Distribution System</li>
         `;
-
     } else if (cat === 'Shallow Well Pumps') {
         featureListItems = `
             <li> <i class="fa-solid fa-check"></i> High Suction</li>
@@ -488,7 +487,6 @@ function createProductCardHtml(p) {
             <li><i class="fa-solid fa-check"></i> Distribution System</li>
         `;
     } else {
-        // Default Key Features if category doesn't match specific list
         featureListItems = `
             <li> <i class="fa-solid fa-check"></i> High Efficiency</li>
             <li><i class="fa-solid fa-check"></i> Durable Design</li>
@@ -499,8 +497,7 @@ function createProductCardHtml(p) {
 
     const features = featureListItems;
 
-    // --- RENDER LOGIC (READ ONLY) ---
-    // Check if table_data exists in product, else use defaults
+    // --- RENDER LOGIC ---
     const td = p.table_data || {
         pipe_size: '25 x 25',
         hp_kw: p.hp ? `${p.hp.replace('HP', '').trim()} / ${(parseFloat(p.hp) / 1.34).toFixed(2)}` : 'N/A',
@@ -508,58 +505,69 @@ function createProductCardHtml(p) {
         discharge_row_vals: [0, 600, 1200, 1600, 2200, 2400]
     };
 
-    // Ensure arrays align
     if (!td.discharge_row_vals) td.discharge_row_vals = [];
     if (!td.head_row_vals) td.head_row_vals = [];
 
-    // Dynamic Header Generation
+    // Header (Discharge Values)
     let headerCells = '';
     td.discharge_row_vals.forEach((val) => {
-        headerCells += `<th style="border: 1px solid #dee2e6; padding: 5px; color: #0A2540;">${val}</th>`;
+        headerCells += `<th>${val}</th>`;
     });
 
-    // Dynamic Body Generation
+    // Body (Head Values)
     let bodyCells = '';
     td.head_row_vals.forEach((val) => {
         const displayVal = (val !== null && val !== undefined && val !== '') ? val : 0;
-        bodyCells += `<td style="border: 1px solid #dee2e6; padding: 8px;">${displayVal}</td>`;
+        bodyCells += `<td>${displayVal}</td>`;
     });
 
-    // Generate a detailed specs table matching the user's reference image for layout but with BRAND COLORS
-    const specsTable = `
-        <div class="specs-table-container" id="table-${p.id}">
-            <table class="product-specs-table" style="text-align: center; border-collapse: collapse; border: 1px solid #dee2e6; color: #0A2540;">
-                <thead>
-                    <tr style="background: #f8f9fa;">
-                        <th style="border: 1px solid #dee2e6; padding: 5px; color: #0A2540;">PIPE<br>SIZE</th>
-                        <th style="border: 1px solid #dee2e6; padding: 5px; color: #0A2540;">HP /<br>KW</th>
-                        <th style="border: 1px solid #dee2e6; padding: 5px; color: #0A2540;">DISCHARGE<br>(LPH)</th>
-                        ${headerCells}
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">${td.pipe_size}</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px;">${td.hp_kw}</td>
-                        <td style="border: 1px solid #dee2e6; padding: 8px; font-weight: bold;">HEAD IN<br>METERS</td>
-                        ${bodyCells}
-                    </tr>
-                </tbody>
-            </table>
+    const perfTableHTML = `
+        <div class="perf-data-container">
+            <h5 class="perf-title">Performance: Head (m) vs Discharge (LPH)</h5>
+            <div class="perf-table-wrapper">
+                <table class="perf-table">
+                    <thead>
+                        <tr>
+                            <th class="matrix-label">Discharge<br>(LPH)</th>
+                            ${headerCells}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="matrix-label">Head<br>(m)</td>
+                            ${bodyCells}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        `;
+    `;
+
+    // Key Specs Block
+    const keySpecsHTML = `
+        <div class="key-specs-grid">
+            <div class="spec-item">
+                <span class="spec-label">Pipe Size</span>
+                <span class="spec-value">${td.pipe_size}</span>
+            </div>
+            <div class="spec-item">
+                <span class="spec-label">Power (HP/KW)</span>
+                <span class="spec-value">${td.hp_kw}</span>
+            </div>
+        </div>
+    `;
 
     return `
         <div class="product-card" id="card-${p.id}">
             <div class="product-card-inner">
                 <div class="card-img-box">
                     <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x300?text=Varshini+Ind'">
-                        <div class="spec-tag ${stockClass}">${p.stock}</div>
+                    <div class="spec-tag ${stockClass}">${p.stock}</div>
                 </div>
                 <div class="card-details">
-                    <div class="details-header" style="text-align: center; margin-bottom: 15px;">
-                        <h3 style="color: #0A2540; text-transform: uppercase; font-size: 1.3rem; margin: 0; font-weight: 800;">
-                            MODEL NAME : <span style="color: #00B4D8;">${p.name}</span>
+                    <div class="details-header">
+                        <h3>
+                            MODEL : <span>${p.name}</span>
                         </h3>
                     </div>
 
@@ -567,7 +575,8 @@ function createProductCardHtml(p) {
                         ${features}
                     </ul>
 
-                    ${specsTable}
+                    ${keySpecsHTML}
+                    ${perfTableHTML}
 
                     <div class="card-actions-row">
                         ${p.stock === 'Out of Stock'
@@ -578,7 +587,7 @@ function createProductCardHtml(p) {
                 </div>
             </div>
         </div>
-        `;
+    `;
 }
 
 
