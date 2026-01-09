@@ -137,12 +137,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileLinks = document.querySelectorAll('.nav-links a');
     mobileLinks.forEach(link => {
         link.addEventListener('click', () => {
+            // Check for dropdown toggle first
+            if (link.id === 'navProducts' && window.innerWidth <= 900) return;
+
             const navLinks = document.querySelector('.nav-links');
             if (navLinks.classList.contains('active')) {
                 navLinks.classList.remove('active');
                 document.getElementById('mobileToggle').innerHTML = '<i class="fa-solid fa-bars"></i>';
             }
         });
+    });
+
+    // 6. Real-time Product Navigation (Event Delegation)
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a');
+        if (link) {
+            const href = link.getAttribute('href');
+            if (href && href.includes('products.html') && href.includes('?')) {
+                // If we are ALREADY on products.html, intercept
+                if (window.location.pathname.includes('products.html') || window.location.href.includes('products.html')) {
+
+                    // Don't intercept if it's just a hash/anchor
+                    e.preventDefault();
+
+                    const urlParams = new URLSearchParams(href.split('?')[1]);
+                    const category = urlParams.get('category');
+                    const series = urlParams.get('series');
+                    const search = urlParams.get('search');
+
+                    if (category) {
+                        filterCategory(category);
+                        // Also update sidebar active state if possible
+                        document.querySelectorAll('.category-list a').forEach(a => a.classList.remove('active'));
+                    }
+                    else if (series) filterProducts(series);
+                    else if (search) filterProducts(search);
+
+                    // Update Browser URL
+                    window.history.pushState({}, '', href);
+
+                    // Close Mobile Menu if open
+                    const navLinks = document.querySelector('.nav-links');
+                    if (navLinks && navLinks.classList.contains('active')) {
+                        navLinks.classList.remove('active');
+                        const mt = document.getElementById('mobileToggle');
+                        if (mt) mt.innerHTML = '<i class="fa-solid fa-bars"></i>';
+                    }
+
+                    // Scroll to Top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        }
     });
 
     // 4. Quick Pump Finder (REAL LOGIC)
@@ -635,14 +681,20 @@ function populateMegaMenu(products) {
     // Use categories for the first menu
     if (catList) {
         catList.innerHTML = CATEGORY_ORDER.map(cat =>
-            `<li><a href="products.html?category=${encodeURIComponent(cat)}" class="direct-cat-link">${cat}</a></li>`
+            `<li><a href="#" onclick="filterCategory('${cat}'); return false;">${cat}</a></li>`
         ).join('');
     }
 }
 
 // Redirects or Filters based on page
 function filterCategory(cat) {
-    window.location.href = `products.html?category=${encodeURIComponent(cat)}`;
+    if (window.location.pathname.includes('products.html')) {
+        // In-page filtering for products.html
+        filterPageCategory(cat);
+    } else {
+        // Redirect from Home or other pages
+        window.location.href = `products.html?category=${encodeURIComponent(cat)}`;
+    }
 }
 
 // Helper for Sidebar/In-Page filtering

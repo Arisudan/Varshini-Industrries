@@ -178,10 +178,10 @@
                 </a>
 
                 <ul class="nav-links">
-                    <li><a href="index.html">Home</a></li>
+                    <li class="nav-item-home"><a href="index.html">Home</a></li>
                     
-                     <li class="has-dropdown">
-                        <a href="products.html" id="navProducts" class="active">Products <i class="fa-solid fa-chevron-down"></i></a>
+                     <li class="has-dropdown nav-item-products">
+                        <a href="#" id="navProducts">Products <i class="fa-solid fa-chevron-down"></i></a>
                         <!-- Mega Menu -->
                         <div class="mega-menu">
                             <div class="mega-content">
@@ -194,9 +194,9 @@
                         </div>
                     </li>
 
-                    <li><a href="products.html?series=Solar">Solar Pump Series</a></li>
-                    <li><a href="products.html?category=DC Series">DC Series</a></li>
-                    <li><a href="contact.html" id="navContact">Contact</a></li>
+                    <li><a href="#" onclick="filterProducts('Solar'); return false;">Solar Pump Series</a></li>
+                    <li><a href="#" onclick="filterCategory('Micro Motors'); return false;">DC Series</a></li>
+                    <li class="nav-item-contact"><a href="contact.html" id="navContact">Contact</a></li>
                 </ul>
 
                 <div class="nav-actions">
@@ -408,7 +408,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=38"></script>
+    <script src="script.js?v=38"></script></script>
     <script>
         // Specific inline script to handle page init
         // We override or extend the main script behavior
