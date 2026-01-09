@@ -635,20 +635,14 @@ function populateMegaMenu(products) {
     // Use categories for the first menu
     if (catList) {
         catList.innerHTML = CATEGORY_ORDER.map(cat =>
-            `<li><a href="#" onclick="filterCategory('${cat}'); return false;">${cat}</a></li>`
+            `<li><a href="products.html?category=${encodeURIComponent(cat)}" class="direct-cat-link">${cat}</a></li>`
         ).join('');
     }
 }
 
 // Redirects or Filters based on page
 function filterCategory(cat) {
-    if (window.location.pathname.includes('products.html')) {
-        // In-page filtering for products.html
-        filterPageCategory(cat);
-    } else {
-        // Redirect from Home or other pages
-        window.location.href = `products.html?category=${encodeURIComponent(cat)}`;
-    }
+    window.location.href = `products.html?category=${encodeURIComponent(cat)}`;
 }
 
 // Helper for Sidebar/In-Page filtering
