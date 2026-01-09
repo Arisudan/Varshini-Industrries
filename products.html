@@ -18,7 +18,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css?v=30">
+    <link rel="stylesheet" href="styles.css?v=31">
     <style>
         /* Specific Styles for Products Page */
         .page-header {
@@ -34,11 +34,12 @@
         }
 
         .page-header h1 {
-            font-size: 4rem; /* Increased size */
+            font-size: clamp(2rem, 5vw, 4rem); /* Responsive Font Size */
             margin-bottom: 20px;
             color: #ffffff; /* Explicit White */
             font-weight: 800; /* Bolder */
             text-transform: uppercase;
+            word-wrap: break-word; /* Prevent overflow */
         }
 
         .page-header p {
@@ -57,7 +58,8 @@
         }
 
         .sidebar-filter {
-            width: 300px; /* Increased width to prevent excessive wrapping */
+            width: 100%; 
+            max-width: 300px; /* Limit width */
             flex-shrink: 0;
             background: #fff;
             padding: 25px 20px;
@@ -396,7 +398,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=30"></script>
+    <script src="script.js?v=31"></script>
     <script>
         // Specific inline script to handle page init
         // We override or extend the main script behavior
