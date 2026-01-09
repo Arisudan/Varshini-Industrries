@@ -36,14 +36,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Sticky Header
+    // 2. Smart Sticky Header (Mobile Optimized)
     const navbar = document.querySelector('.navbar');
+    let lastScrollY = window.scrollY;
+
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
+        const currentScrollY = window.scrollY;
+
+        // Base Sticky Class (Background Color)
+        if (currentScrollY > 50) {
             navbar.classList.add('scrolled');
         } else {
             navbar.classList.remove('scrolled');
         }
+
+        // Smart Hide/Show (Mobile Only)
+        if (window.innerWidth <= 900) {
+            if (currentScrollY > lastScrollY && currentScrollY > 100) {
+                // Scrolling DOWN -> Hide
+                navbar.style.transform = 'translateY(-100%)';
+                navbar.style.transition = 'transform 0.3s ease-in-out';
+            } else {
+                // Scrolling UP -> Show
+                navbar.style.transform = 'translateY(0)';
+            }
+        } else {
+            // Desktop: Always Show (Reset)
+            navbar.style.transform = 'translateY(0)';
+        }
+
+        lastScrollY = currentScrollY;
     });
 
     // 3. Dynamic Product Loading & Search
@@ -681,7 +703,7 @@ function populateMegaMenu(products) {
     // Use categories for the first menu
     if (catList) {
         catList.innerHTML = CATEGORY_ORDER.map(cat =>
-            `<li><a href="#" onclick="filterCategory('${cat}'); return false;">${cat}</a></li>`
+            `<li><a href="products.html?category=${encodeURIComponent(cat)}">${cat}</a></li>`
         ).join('');
     }
 }
