@@ -15,6 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 1b. Mobile Products Dropdown (Accordion)
+    const navProducts = document.getElementById('navProducts');
+    if (navProducts) {
+        navProducts.addEventListener('click', (e) => {
+            // Only toggle on mobile
+            if (window.innerWidth <= 900) {
+                e.preventDefault();
+                const parent = navProducts.closest('.nav-item-products');
+                if (parent) {
+                    parent.classList.toggle('dropdown-active');
+                    // Toggle Icon
+                    const icon = navProducts.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('fa-chevron-down');
+                        icon.classList.toggle('fa-chevron-up');
+                    }
+                }
+            }
+        });
+    }
+
     // 2. Sticky Header
     const navbar = document.querySelector('.navbar');
     window.addEventListener('scroll', () => {

@@ -2926,7 +2926,8 @@ img {
         box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
         transition: right 0.3s cubic-bezier(0.77, 0, 0.175, 1);
         z-index: 1000;
-        gap: 20px;
+        gap: 0;
+        /* Reduced Gap as we use padding */
     }
 
     .nav-links.active {
@@ -2937,24 +2938,84 @@ img {
         width: 100%;
         border-bottom: 1px solid #f1f1f1;
         padding-bottom: 0;
-        /* Remove padding from li, move to a */
+        position: relative;
+    }
+
+    /* 4. Hide Home and Contact (Redundant in bottom nav) */
+    .nav-item-home,
+    .nav-item-contact {
+        display: none !important;
     }
 
     .nav-links a {
         display: block;
-        /* Full width click area */
         width: 100%;
         padding: 15px 0;
         color: #333 !important;
-        /* Dark text for readability */
         font-weight: 600;
         font-size: 1.1rem;
+        transition: none !important;
+        /* Remove animations */
+        transform: none !important;
+        /* Prevent moving left/right */
     }
 
     .nav-links a:hover {
         color: var(--industrial-teal) !important;
         background: transparent;
+        transform: none !important;
     }
+
+    /* 5. Mobile Accordion for Products */
+    .mega-menu {
+        position: static;
+        width: 100%;
+        transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: transparent;
+        backdrop-filter: none;
+        box-shadow: none;
+        padding: 0 0 0 15px;
+        /* Indent sub-items */
+        border: none;
+        display: none;
+        /* Hidden by default */
+        transition: none !important;
+    }
+
+    .nav-item-products.dropdown-active .mega-menu {
+        display: block;
+        /* Show when toggled */
+        animation: fadeIn 0.3s;
+    }
+
+    .mega-column h4 {
+        display: none;
+        /* Hide 'Categories' title on mobile if redundant */
+    }
+
+    .mega-column ul li {
+        margin-bottom: 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .mega-column ul li a {
+        font-size: 0.95rem;
+        padding: 12px 0;
+        color: #555 !important;
+        font-weight: 500;
+    }
+
+    .has-dropdown:hover .mega-menu {
+        /* Override desktop hover behavior */
+        display: none;
+    }
+
+    .nav-item-products.dropdown-active:hover .mega-menu {
+        display: block;
+    }
+
 
     /* Hide Desktop Search on Mobile as we'll use Full-Screen Search */
     .nav-actions .search-bar {

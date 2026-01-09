@@ -18,7 +18,7 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="styles.css?v=36">
+    <link rel="stylesheet" href="styles.css?v=37">
 </head>
 
 <body>
@@ -56,11 +56,10 @@
                 </a>
 
                 <ul class="nav-links">
-                    <li><a href="index.html" class="active">Home</a></li>
+                    <li class="nav-item-home"><a href="index.html" class="active">Home</a></li>
 
-                    <li class="has-dropdown">
-                        <a href="#products-section" id="navProducts">Products <i
-                                class="fa-solid fa-chevron-down"></i></a>
+                    <li class="has-dropdown nav-item-products">
+                        <a href="#" id="navProducts">Products <i class="fa-solid fa-chevron-down"></i></a>
                         <!-- Mega Menu -->
                         <div class="mega-menu">
                             <div class="mega-content">
@@ -77,7 +76,7 @@
 
                     <li><a href="#" onclick="filterProducts('Solar'); return false;">Solar Pump Series</a></li>
                     <li><a href="#" onclick="filterCategory('Micro Motors'); return false;">DC Series</a></li>
-                    <li><a href="contact.html" id="navContact">Contact</a></li>
+                    <li class="nav-item-contact"><a href="contact.html" id="navContact">Contact</a></li>
 
                 </ul>
 
@@ -622,7 +621,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=36"></script>
+    <script src="script.js?v=37"></script>
 </body>
 
 </html>
