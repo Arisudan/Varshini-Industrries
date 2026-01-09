@@ -408,11 +408,17 @@ img {
 /* -------------------------------------------------------------------
    1. Dual-Tier Header
 ------------------------------------------------------------------- */
+/* -------------------------------------------------------------------
+   1. Modern Dual-Tier Header (Redesigned)
+------------------------------------------------------------------- */
 .top-bar {
-    background-color: var(--primary-dark);
-    color: var(--text-light);
-    font-size: 0.85rem;
-    padding: 8px 0;
+    background-color: #051626;
+    /* Deepest Navy */
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.8rem;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    letter-spacing: 0.5px;
 }
 
 .top-bar-flex {
@@ -423,185 +429,147 @@ img {
 
 .top-contact-link {
     color: #ffffff;
-    margin-right: 20px;
-    font-weight: 600;
+    margin-right: 25px;
+    font-weight: 500;
     text-decoration: none;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-}
-
-.top-contact-link:hover {
-    color: var(--action-yellow);
 }
 
 .top-contact-link i {
-    color: var(--action-yellow);
-    /* Icon stays yellow or turns white? User said "text should be white... when mouse arrow goes above should turn yellow". Icons are usually yellow in this theme. Let's keep icons yellow and text white, then text turns yellow. Or maybe everything white then yellow. User said "colour of the contact number all the text should be in white". I will make icons match the text behavior for a cleaner hover, or keep icons yellow and just text hovers. User said "Colour of contact number all text...". I'll make the whole link (icon + text) behave together. */
-    transition: color 0.3s ease;
+    color: var(--industrial-teal);
+    font-size: 0.9rem;
 }
 
-.top-contact-link:hover i {
-    color: var(--action-yellow);
-}
-
-/* Override existing strong color if needed, or just remove strong tags in HTML */
-.support-info {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+.top-contact-link:hover {
+    color: var(--industrial-teal);
+    transform: translateX(3px);
 }
 
 .social-link-top {
-    color: rgba(255, 255, 255, 0.8);
-    margin-left: 15px;
-    font-size: 0.9rem;
-    transition: 0.3s;
+    color: rgba(255, 255, 255, 0.6);
+    margin-left: 18px;
+    font-size: 0.85rem;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .social-link-top:hover {
-    color: var(--action-yellow);
-    transform: translateY(-2px);
-}
-
-.top-links a {
-    margin-left: 15px;
     color: #ffffff;
-    /* Make text white */
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: 0.3s;
+    transform: translateY(-3px) scale(1.2);
 }
 
-.top-links a:hover {
-    color: var(--action-yellow);
-}
-
-/* Navigation */
+/* Modern Navbar */
 .navbar {
-    background: #fff;
-    padding: 15px 5%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: rgba(10, 37, 64, 0.98);
+    /* Deep Navy */
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 15px 0;
     position: sticky;
     top: 0;
     z-index: 1000;
-    transition: 0.3s;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .navbar.scrolled {
-    padding: 10px 5%;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    padding: 10px 0;
+    background: rgba(5, 22, 38, 0.98);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .nav-flex {
-    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-/* Logo Styling */
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-decoration: none;
-    /* Ensure no underline */
+.logo-image {
+    height: 55px;
+    /* Adjust based on logo */
+    transition: all 0.3s ease;
+    filter: brightness(1.1);
+    background: white;
+    /* Give logo a clean badge look if it has white bg */
+    padding: 5px 15px;
+    border-radius: 8px;
 }
 
-.logo-icon {
-    font-size: 2.2rem;
-    color: var(--industrial-teal);
-    filter: drop-shadow(0 2px 4px rgba(0, 180, 216, 0.2));
-}
-
-.logo-text {
-    display: flex;
-    flex-direction: column;
-    font-family: 'Roboto Condensed', sans-serif;
-    font-weight: 700;
-    font-size: 2rem;
-    line-height: 0.9;
-    color: var(--primary-navy);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.sub-text {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #555;
-    letter-spacing: 4px;
-    /* Wide tracking for industrial look */
-    margin-top: 2px;
-    margin-left: 2px;
-    /* Visual balance */
-    color: var(--industrial-teal);
+.navbar.scrolled .logo-image {
+    height: 45px;
 }
 
 .nav-links {
     display: flex;
-    gap: 40px;
-    /* Increased gap for better spacing */
+    gap: 35px;
     align-items: center;
     list-style: none;
-    justify-content: space-between;
-    /* Distribute evenly if container allows */
-}
-
-/* Hide mobile search by default on desktop */
-.mobile-search-item {
-    display: none;
 }
 
 .nav-links a {
+    color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
-    color: var(--primary-navy);
-    /* Changed from --dark-navy to match existing vars */
-    transition: 0.3s;
     text-transform: uppercase;
-    font-size: 0.9rem;
-    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    position: relative;
+    padding: 10px 0;
+    transition: all 0.3s ease;
 }
 
-.nav-links a:hover,
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--industrial-teal);
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 180, 216, 0.5);
+}
+
+.nav-links a:hover {
+    color: #ffffff;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+    width: 100%;
+}
+
 .nav-links a.active {
-    color: var(--primary-navy);
-    /* Changed from --titan-blue to match existing vars */
+    color: var(--industrial-teal);
 }
 
-/* Mega Menu */
+/* Mega Menu / Dropdown Modernization */
 .has-dropdown {
     position: relative;
-    padding: 15px 0;
 }
 
 .mega-menu {
     position: absolute;
-    top: 100%;
-    left: 0;
-    width: 300px;
-    /* Reduced width for single column */
-    background: white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    border-top: 3px solid var(--primary-navy);
+    top: calc(100% + 15px);
+    left: 50%;
+    transform: translateX(-50%) translateY(15px);
+    width: 280px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px);
-    transition: 0.3s ease;
-    padding: 20px;
-    border-radius: 0 0 8px 8px;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .has-dropdown:hover .mega-menu {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
 }
 
 .mega-content {
@@ -766,8 +734,15 @@ img {
     display: none;
     background: none;
     border: none;
-    font-size: 1.5rem;
-    color: var(--primary-navy);
+    font-size: 1.8rem;
+    color: #ffffff;
+    /* White for dark navbar */
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mobile-toggle:hover {
+    color: var(--industrial-teal);
 }
 
 /* -------------------------------------------------------------------
@@ -2660,7 +2635,8 @@ img {
 .category-grid-display {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
+    gap: 50px;
+    /* Increased gap for better spacing */
     margin-bottom: 60px;
 }
 
@@ -2746,8 +2722,9 @@ img {
     /* 1. Hamburger Menu (Off-Canvas Slide-In) */
     .mobile-toggle {
         display: block;
-        font-size: 1.5rem;
-        color: var(--primary-navy);
+        font-size: 1.8rem;
+        color: #ffffff;
+        /* White for dark navbar */
         cursor: pointer;
         z-index: 1100;
     }
@@ -2789,6 +2766,9 @@ img {
         grid-template-columns: 1fr;
         gap: 30px;
         text-align: center;
+        padding-top: 60px;
+        /* Added top padding to prevent overlap */
+        padding-bottom: 60px;
     }
 
     .manufacture-header {
@@ -3384,12 +3364,36 @@ img {
         gap: 40px;
     }
 
+    .intro-tagline {
+        color: var(--industrial-teal);
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
     .intro-text-col h2 {
         font-size: 2.2rem;
+        color: #ffffff !important;
     }
 }
 
 /* COMMON / SHARED (Base definitions) */
+.intro-tagline {
+    color: var(--industrial-teal);
+    font-weight: 700;
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.intro-text-col h2 {
+    color: #ffffff;
+}
+
 .intro-blob {
     position: absolute;
     border-radius: 50%;
