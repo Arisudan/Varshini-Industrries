@@ -414,38 +414,9 @@ img {
     font-size: 0.85rem;
 }
 
-/* Skeleton Loading Animation */
-.skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: 4px;
-    min-height: 20px;
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Quick Finder Premium Select */
-.finder-select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
-    padding-right: 40px !important;
-    /* Space for arrow */
-}
-
+/* -------------------------------------------------------------------
+   1. Dual-Tier Header
+------------------------------------------------------------------- */
 /* -------------------------------------------------------------------
    1. Modern Dual-Tier Header (Redesigned)
 ------------------------------------------------------------------- */
@@ -2939,23 +2910,6 @@ img {
         /* White for dark navbar */
         cursor: pointer;
         z-index: 1100;
-    }
-
-    /* PREMIUM UPGRADE: Hide Top Bar to save screen space */
-    .top-bar {
-        display: none !important;
-    }
-
-    /* PREMIUM UPGRADE: Hide Slider Arrows (Rely on Swipe) */
-    .prev-arrow,
-    .next-arrow {
-        display: none !important;
-    }
-
-    /* PREMIUM UPGRADE: Enlarged Footer Touch Targets */
-    .footer-social-link {
-        padding: 0 15px;
-        font-size: 1.4rem;
     }
 
     .nav-links {
