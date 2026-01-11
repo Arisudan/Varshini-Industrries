@@ -488,6 +488,18 @@ img {
     color: var(--action-yellow);
 }
 
+@media (max-width: 480px) {
+    .top-links a:not(.social-link-top) {
+        margin-left: 10px;
+        /* Reduce spacing significantly */
+        font-size: 0.75rem;
+    }
+
+    .social-link-top {
+        margin-left: 10px;
+    }
+}
+
 /* Modern Navbar */
 .navbar {
     background: rgba(10, 37, 64, 0.98);

@@ -101,44 +101,60 @@ ul {
     background: rgba(0, 0, 0, 0.2);
     display: flex;
     align-items: center;
-    /* Vertical Center */
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 15px;
 }
 
 .user-info {
     display: flex;
     align-items: center;
-    gap: 15px;
-    /* More space */
+    gap: 12px;
+    flex-grow: 1;
 }
 
 .avatar {
-    width: 45px;
-    /* Slightly larger */
-    height: 45px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
     background: var(--teal);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
 }
 
 .avatar i {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: white;
 }
 
 .user-info h4 {
-    font-size: 1rem;
+    font-size: 0.95rem;
     margin: 0;
-    line-height: 1.2;
+    line-height: normal;
+    color: #e2e8f0;
 }
 
 .user-info small {
-    opacity: 0.8;
-    font-size: 0.8rem;
+    opacity: 0.7;
+    font-size: 0.75rem;
     display: block;
+    margin-top: 2px;
+}
+
+.logout-btn {
+    background: none;
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    border-radius: 4px;
+    color: #ff6b6b;
+    cursor: pointer;
+    font-size: 1rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
 }
 
 .logout-btn {
