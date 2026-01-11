@@ -3126,13 +3126,15 @@ img {
 
     /* Fix for long category names overflowing */
     .category-grid-display .cat-btn-label {
-        font-size: 0.55rem !important;
-        /* Minimized to 0.55rem to fit long texts */
-        padding: 5px 1px !important;
-        letter-spacing: -0.2px !important;
-        /* Tighter spacing */
+        font-size: 0.45rem !important;
+        /* Extremely small to fit the longest text */
+        padding: 4px 1px !important;
+        letter-spacing: -0.3px !important;
+        /* Tight spacing used */
         white-space: normal !important;
-        line-height: 1.1 !important;
+        line-height: 1.0 !important;
+        text-align: center;
+        width: 100%;
         min-height: 40px;
         /* Force height for consistency */
         display: flex;
