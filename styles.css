@@ -3134,8 +3134,15 @@ img {
 
     .top-bar-flex {
         flex-direction: column;
-        gap: 5px;
+        gap: 8px;
         text-align: center;
+        padding-bottom: 5px;
+    }
+
+    .top-bar-flex a {
+        display: inline-block;
+        padding: 5px 12px;
+        font-size: 0.9rem;
     }
 
     /* Hide header logo text on very small screens to save space */
