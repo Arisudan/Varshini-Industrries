@@ -719,7 +719,16 @@ function populateMegaMenu(products) {
 function filterCategory(cat) {
     if (window.location.pathname.includes('products.html')) {
         // In-page filtering for products.html
+        // In-page filtering for products.html
         filterPageCategory(cat);
+        // Scroll to Grid
+        const grid = document.getElementById('productGrid') || document.querySelector('.products-layout');
+        if (grid) {
+            const headerOffset = 100;
+            const elementPosition = grid.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+        }
     } else {
         // Redirect from Home or other pages
         window.location.href = `products.html?category=${encodeURIComponent(cat)}`;
