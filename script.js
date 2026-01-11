@@ -1206,12 +1206,16 @@ function populateCategorySheet(products) {
 
     validCategories.forEach(cat => {
         // Map icons for categories
-        let icon = 'fa-pump-soap';
+        let icon = 'fa-pump-medical'; // Default generic pump matches industry better than soap
+
         if (cat.includes('Solar')) icon = 'fa-solar-panel';
-        if (cat.includes('Submersible')) icon = 'fa-water';
-        if (cat.includes('Booster')) icon = 'fa-gauge-high';
-        if (cat.includes('Openwell')) icon = 'fa-arrow-up-from-water-pump';
-        if (cat.includes('Monoblock')) icon = 'fa-gears';
+        else if (cat.includes('Borewell')) icon = 'fa-arrow-down-long'; // Deep
+        else if (cat.includes('Openwell')) icon = 'fa-water'; // Submerged in open water
+        else if (cat.includes('Monoblock')) icon = 'fa-gears'; // Mechanical/Motor unit
+        else if (cat.includes('Booster')) icon = 'fa-gauge-high'; // Pressure
+        else if (cat.includes('Shallow')) icon = 'fa-faucet'; // Closer to surface/home use
+        else if (cat.includes('Supersuction')) icon = 'fa-tornado'; // Suction power
+        else if (cat.includes('Centrifugal')) icon = 'fa-fan'; // Impeller action
 
         html += `<li><a href="#" onclick="handleSheetCategoryClick('${cat}')"><i class="fa-solid ${icon}"></i> ${cat}</a></li>`;
     });
