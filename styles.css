@@ -563,6 +563,10 @@ img {
     color: #ffffff;
 }
 
+.mobile-only-nav {
+    display: none;
+}
+
 .nav-links a:hover::after,
 .nav-links a.active::after {
     width: 100%;
@@ -2962,6 +2966,13 @@ img {
         /* Remove animations */
         transform: none !important;
         /* Prevent moving left/right */
+    }
+
+    .mobile-only-nav {
+        display: block !important;
+        margin-top: 10px;
+        border-top: 1px solid #ccc;
+        /* Separator */
     }
 
     .nav-links a:hover {
