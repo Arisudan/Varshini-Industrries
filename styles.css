@@ -428,6 +428,9 @@ img {
     padding: 10px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     letter-spacing: 0.5px;
+    position: relative;
+    z-index: 2000;
+    /* Ensure this is top-most clickable */
 }
 
 .top-bar-flex {
@@ -2749,6 +2752,9 @@ img {
     /* Soft shadow */
     text-decoration: none;
     color: inherit;
+    z-index: 10;
+    position: relative;
+    touch-action: manipulation;
 }
 
 .cat-display-card:hover {
