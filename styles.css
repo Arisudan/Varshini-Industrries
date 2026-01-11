@@ -2945,13 +2945,10 @@ img {
 @media (max-width: 900px) {
 
     /* 1. Hamburger Menu (Off-Canvas Slide-In) */
+    /* 1. Hamburger Menu (Off-Canvas Slide-In) */
     .mobile-toggle {
-        display: block;
-        font-size: 1.8rem;
-        color: #ffffff;
-        /* White for dark navbar */
-        cursor: pointer;
-        z-index: 1100;
+        display: none !important;
+        /* Hidden as per request to rely on bottom nav */
     }
 
     .nav-links {
