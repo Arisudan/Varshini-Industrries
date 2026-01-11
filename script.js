@@ -164,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 6. Real-time Product Navigation (Event Delegation)
+    // 6. Real-time Product Navigation (Event Delegation)
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a');
         if (link) {
@@ -172,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If we are ALREADY on products.html, intercept
                 if (window.location.pathname.includes('products.html') || window.location.href.includes('products.html')) {
 
-                    // Don't intercept if it's just a hash/anchor
                     e.preventDefault();
 
                     const urlParams = new URLSearchParams(href.split('?')[1]);
@@ -180,18 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const series = urlParams.get('series');
                     const search = urlParams.get('search');
 
-                    if (category) {
-                        filterCategory(category);
-                        // Also update sidebar active state if possible
-                        document.querySelectorAll('.category-list a').forEach(a => a.classList.remove('active'));
-                    }
-                    else if (series) filterProducts(series);
-                    else if (search) filterProducts(search);
-
-                    // Update Browser URL
-                    window.history.pushState({}, '', href);
-
-                    // Close Mobile Menu if open
+                    // Close Mobile Menu if open - BEFORE filtering to prevent jumpiness
                     const navLinks = document.querySelector('.nav-links');
                     if (navLinks && navLinks.classList.contains('active')) {
                         navLinks.classList.remove('active');
@@ -199,9 +188,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (mt) mt.innerHTML = '<i class="fa-solid fa-bars"></i>';
                     }
 
-                    // Scroll to Top
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (category) {
+                        // Use our robust filterCategory function which handles scrolling
+                        filterCategory(category);
+                    }
+                    else if (series) filterProducts(series);
+                    else if (search) filterProducts(search);
+
+                    // Update Browser URL
+                    window.history.pushState({}, '', href);
                 }
+                // If NOT on products.html, let the default behavior happen (redirect)
             }
         }
     });
