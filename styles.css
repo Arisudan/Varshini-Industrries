@@ -3095,6 +3095,22 @@ img {
     .section-title {
         font-size: 1.75rem;
     }
+
+    /* Fix for long category names overflowing */
+    .cat-btn-label {
+        font-size: 0.85rem !important;
+        /* Smaller text */
+        letter-spacing: 0.5px !important;
+        padding: 8px 5px !important;
+        word-wrap: break-word;
+        white-space: normal;
+        line-height: 1.2;
+    }
+
+    .product-list-tags span {
+        font-size: 0.75rem !important;
+        padding: 6px 10px !important;
+    }
 }
 
 @media (max-width: 480px) {

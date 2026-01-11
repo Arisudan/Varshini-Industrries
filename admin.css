@@ -444,6 +444,10 @@ ul {
     .user-panel {
         flex-direction: row;
         justify-content: space-between;
+        margin-top: auto;
+        padding-bottom: 20px;
+        margin-bottom: 150px;
+        /* Lift significantly up from the bottom edge */
     }
 
     .main-content {
