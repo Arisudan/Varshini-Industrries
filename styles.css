@@ -3097,14 +3097,18 @@ img {
     }
 
     /* Fix for long category names overflowing */
-    .cat-btn-label {
-        font-size: 0.85rem !important;
-        /* Smaller text */
-        letter-spacing: 0.5px !important;
-        padding: 8px 5px !important;
-        word-wrap: break-word;
-        white-space: normal;
-        line-height: 1.2;
+    .category-grid-display .cat-btn-label {
+        font-size: 0.65rem !important;
+        /* Extremely small to fit */
+        padding: 6px 2px !important;
+        letter-spacing: 0px !important;
+        white-space: normal !important;
+        line-height: 1.1 !important;
+        min-height: 40px;
+        /* Force height for consistency */
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .product-list-tags span {

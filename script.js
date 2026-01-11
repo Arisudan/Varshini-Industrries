@@ -281,7 +281,19 @@ async function fetchPublicProducts() {
         const hpkwParam = urlParams.get('hpkw');
 
         if (categoryParam) {
-            filterCategory(categoryParam);
+            filterPageCategory(categoryParam); // Direct call to avoid redirect loop check
+
+            // Allow DOM to settle then scroll
+            setTimeout(() => {
+                const grid = document.getElementById('productGrid') || document.querySelector('.products-layout');
+                if (grid) {
+                    const headerOffset = 100;
+                    const elementPosition = grid.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            }, 500);
+
             // Hide Sidebar for DC Series (Micro Motors)
             if (categoryParam === 'Micro Motors') {
                 const sidebar = document.querySelector('.sidebar-filter');
