@@ -2211,10 +2211,10 @@ img {
     .card-details h3 {
         justify-content: center;
         /* Center the title and icon */
-        font-size: 0.95rem;
-        /* Reduced to fit long titles */
-        line-height: 1.3;
-        min-height: 2.6rem;
+        font-size: 0.8rem !important;
+        /* Aggressively reduced */
+        line-height: 1.25 !important;
+        min-height: 2.5rem;
         /* Ensure 2 lines of space */
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -3044,8 +3044,9 @@ img {
     }
 
     .mega-column ul li a {
-        font-size: 0.95rem;
-        padding: 12px 0;
+        font-size: 0.75rem !important;
+        /* Mobile Mega Menu */
+        padding: 10px 0;
         color: #555 !important;
         font-weight: 500;
     }
@@ -4344,11 +4345,12 @@ img {
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s;
-    font-size: 0.85rem;
-    /* Reduced from 1rem */
-    line-height: 1.3;
-    word-break: break-word;
+    font-size: 0.75rem !important;
+    /* Force small size */
+    line-height: 1.2 !important;
+    word-break: break-word !important;
     /* Prevent overflow */
+    hyphens: auto;
 }
 
 .sheet-list li a i {
