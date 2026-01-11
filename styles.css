@@ -2211,10 +2211,10 @@ img {
     .card-details h3 {
         justify-content: center;
         /* Center the title and icon */
-        font-size: 0.8rem !important;
-        /* Aggressively reduced */
-        line-height: 1.25 !important;
-        min-height: 2.5rem;
+        font-size: 0.95rem;
+        /* Reduced to fit long titles */
+        line-height: 1.3;
+        min-height: 2.6rem;
         /* Ensure 2 lines of space */
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -3044,9 +3044,8 @@ img {
     }
 
     .mega-column ul li a {
-        font-size: 0.75rem !important;
-        /* Mobile Mega Menu */
-        padding: 10px 0;
+        font-size: 0.95rem;
+        padding: 12px 0;
         color: #555 !important;
         font-weight: 500;
     }
@@ -3127,15 +3126,13 @@ img {
 
     /* Fix for long category names overflowing */
     .category-grid-display .cat-btn-label {
-        font-size: 0.45rem !important;
-        /* Extremely small to fit the longest text */
-        padding: 4px 1px !important;
-        letter-spacing: -0.3px !important;
-        /* Tight spacing used */
+        font-size: 0.55rem !important;
+        /* Minimized to 0.55rem to fit long texts */
+        padding: 5px 1px !important;
+        letter-spacing: -0.2px !important;
+        /* Tighter spacing */
         white-space: normal !important;
-        line-height: 1.0 !important;
-        text-align: center;
-        width: 100%;
+        line-height: 1.1 !important;
         min-height: 40px;
         /* Force height for consistency */
         display: flex;
@@ -4345,12 +4342,11 @@ img {
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s;
-    font-size: 0.75rem !important;
-    /* Force small size */
-    line-height: 1.2 !important;
-    word-break: break-word !important;
+    font-size: 0.85rem;
+    /* Reduced from 1rem */
+    line-height: 1.3;
+    word-break: break-word;
     /* Prevent overflow */
-    hyphens: auto;
 }
 
 .sheet-list li a i {
