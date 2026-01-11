@@ -122,14 +122,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bottomNavCats) {
         bottomNavCats.addEventListener('click', (e) => {
             e.preventDefault();
-            const navLinks = document.querySelector('.nav-links');
-            const mobileToggle = document.getElementById('mobileToggle');
-            if (navLinks && mobileToggle) {
-                navLinks.classList.toggle('active');
-                mobileToggle.innerHTML = navLinks.classList.contains('active')
-                    ? '<i class="fa-solid fa-xmark"></i>'
-                    : '<i class="fa-solid fa-bars"></i>';
+            const sheet = document.getElementById('categorySheet');
+            const overlay = document.getElementById('sheetOverlay');
+            if (sheet && overlay) {
+                sheet.classList.add('active');
+                overlay.classList.add('active');
             }
+        });
+    }
+
+    const closeCatSheetBtn = document.getElementById('closeCategorySheet');
+    const sheetOverlay = document.getElementById('sheetOverlay');
+
+    if (closeCatSheetBtn) {
+        closeCatSheetBtn.addEventListener('click', () => {
+            document.getElementById('categorySheet').classList.remove('active');
+            document.getElementById('sheetOverlay').classList.remove('active');
+        });
+    }
+
+    if (sheetOverlay) {
+        sheetOverlay.addEventListener('click', () => {
+            document.getElementById('categorySheet').classList.remove('active');
+            document.getElementById('sheetOverlay').classList.remove('active');
         });
     }
 
@@ -255,6 +270,7 @@ async function fetchPublicProducts() {
         }
 
         populateMegaMenu(allProducts);
+        populateCategorySheet(allProducts);
         populateFinderSelects(allProducts);
 
         // Check for URL Params (Category, Series, OR Pipe/HP)
@@ -287,6 +303,19 @@ async function fetchPublicProducts() {
         } else {
             // Default: Show all
             renderPublicProducts(allProducts);
+        }
+
+        // SCROLL FIX: If redirected with a category, scroll to the grid
+        if (categoryParam || seriesParam || pipeParam || hpkwParam) {
+            setTimeout(() => {
+                const gridSection = document.getElementById('productGrid') || document.querySelector('.product-showcase');
+                if (gridSection) {
+                    const headerOffset = 120;
+                    const elementPosition = gridSection.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+            }, 600);
         }
         // Populate Sidebar
         const sidebarList = document.getElementById('sidebarCategories');
@@ -1164,4 +1193,46 @@ function populateFinderSelects(products) {
         opt.textContent = val;
         hpKwSelect.appendChild(opt);
     });
+}
+
+function populateCategorySheet(products) {
+    const sheetList = document.getElementById('sheetCategoryList');
+    if (!sheetList) return;
+
+    let html = `<li><a href="#" onclick="handleSheetCategoryClick('All')"><i class="fa-solid fa-layer-group"></i> All Products</a></li>`;
+
+    // Use the global CATEGORY_ORDER if available, or derive from products
+    const validCategories = CATEGORY_ORDER.filter(cat => products.some(p => p.category === cat));
+
+    validCategories.forEach(cat => {
+        // Map icons for categories
+        let icon = 'fa-pump-soap';
+        if (cat.includes('Solar')) icon = 'fa-solar-panel';
+        if (cat.includes('Submersible')) icon = 'fa-water';
+        if (cat.includes('Booster')) icon = 'fa-gauge-high';
+        if (cat.includes('Openwell')) icon = 'fa-arrow-up-from-water-pump';
+        if (cat.includes('Monoblock')) icon = 'fa-gears';
+
+        html += `<li><a href="#" onclick="handleSheetCategoryClick('${cat}')"><i class="fa-solid ${icon}"></i> ${cat}</a></li>`;
+    });
+
+    // Add Special Links
+    html += `<li><a href="#" onclick="handleSheetCategoryClick('Solar Pump Series')"><i class="fa-solid fa-sun text-teal"></i> Solar Pump Series</a></li>`;
+    html += `<li><a href="#" onclick="handleSheetCategoryClick('DC Series')"><i class="fa-solid fa-bolt text-teal"></i> DC Series</a></li>`;
+
+    sheetList.innerHTML = html;
+}
+
+function handleSheetCategoryClick(cat) {
+    // Close Sheet
+    const sheet = document.getElementById('categorySheet');
+    const overlay = document.getElementById('sheetOverlay');
+    if (sheet) sheet.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+
+    // Filter/Redirect
+    if (cat === 'Solar Pump Series') filterProducts('Solar');
+    else if (cat === 'DC Series') filterCategory('Micro Motors');
+    else if (cat === 'All') filterCategory('All');
+    else filterCategory(cat);
 }

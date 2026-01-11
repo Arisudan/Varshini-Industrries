@@ -4220,3 +4220,119 @@ img {
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
     /* Deep shadow */
 }
+
+/* -------------------------------------------------------------------
+   App-Style Bottom Sheet (Categories)
+------------------------------------------------------------------- */
+.category-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+    transform: translateY(110%);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-bottom-sheet.active {
+    transform: translateY(0);
+}
+
+.sheet-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sheet-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-navy);
+}
+
+.sheet-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.sheet-content {
+    overflow-y: auto;
+    padding: 20px;
+    flex-grow: 1;
+}
+
+.sheet-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sheet-list li {
+    margin-bottom: 15px;
+}
+
+.sheet-list li a {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    color: var(--primary-navy);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+.sheet-list li a i {
+    margin-right: 15px;
+    color: var(--industrial-teal);
+    font-size: 1.2rem;
+}
+
+.sheet-list li a:hover,
+.sheet-list li a:active {
+    background: var(--industrial-teal);
+    color: white;
+}
+
+.sheet-list li a:hover i,
+.sheet-list li a:active i {
+    color: white;
+}
+
+.sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    backdrop-filter: blur(5px);
+}
+
+.sheet-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Ensure mobile nav is always on top of page content but below sheet */
+.mobile-bottom-nav {
+    z-index: 1000;
+}

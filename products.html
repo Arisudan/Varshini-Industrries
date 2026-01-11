@@ -165,7 +165,7 @@
                     <a href="#" class="social-link-top"><i class="fa-brands fa-linkedin-in"></i></a>
                     <a href="#" class="social-link-top"><i class="fa-brands fa-youtube"></i></a>
                     <span style="opacity: 0.3; margin: 0 10px;">|</span>
-                    <a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin</a>
+                    <a href="admin.html"><i class="fa-solid fa-user-shield"></i> Admin</a>
                     <a href="assets/VARSHINI PRODUCT CATALOGUE.pdf" target="_blank"><i class="fa-solid fa-file-pdf"></i> Catalog</a>
                 </div>
             </div>
@@ -197,7 +197,7 @@
                     <li><a href="products.html?series=Solar">Solar Pump Series</a></li>
                     <li><a href="products.html?category=Micro%20Motors">DC Series</a></li>
                     <li class="nav-item-contact"><a href="contact.html" id="navContact">Contact</a></li>
-                    <li class="mobile-only-nav"><a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin Login</a></li>
+
                 </ul>
 
                 <div class="nav-actions">
@@ -409,7 +409,21 @@
         </div>
     </div>
 
-    <script src="script.js?v=41"></script></script></script></script></script>
+    <!-- Category Bottom Sheet (App Style) -->
+    <div class="sheet-overlay" id="sheetOverlay"></div>
+    <div class="category-bottom-sheet" id="categorySheet">
+        <div class="sheet-header">
+            <h3>Product Categories</h3>
+            <button class="sheet-close" id="closeCategorySheet"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="sheet-content">
+            <ul class="sheet-list" id="sheetCategoryList">
+                <!-- Populated via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js?v=42"></script></script></script></script></script>
     <script>
         // Specific inline script to handle page init
         // We override or extend the main script behavior
