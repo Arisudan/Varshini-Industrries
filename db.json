@@ -2,7 +2,7 @@
     "users": [
         {
             "username": "admin",
-            "password": "admin123",
+            "password": "$2b$10$YhN57M3Y5edOy5ZjqdWuF.fMGFw1Phu6y8q9A5zhHP/uac1kgO3Qm",
             "role": "admin",
             "name": "Super Admin"
         }
@@ -10,138 +10,10 @@
     "stats": {
         "dealers": 5420,
         "pendingOrders": 128,
-        "monthLeads": 842,
-        "products": 25
+        "monthLeads": 840,
+        "products": 14
     },
     "products": [
-        {
-            "id": 101,
-            "category": "Self-Priming Monoblock Pumps",
-            "name": "SUPER FLOW",
-            "series": "Domestic Series",
-            "hp": "0.5 HP",
-            "price": "Call for Price",
-            "stock": "In Stock",
-            "image": "assets/Products/Selfpriming Monoblock Pump (Super Flow).jpeg",
-            "table_data": {
-                "pipe_size": "25 x 25",
-                "hp_kw": "0.5 / 0.37",
-                "discharge_row_vals": [
-                    0,
-                    600,
-                    1200,
-                    1600,
-                    2200,
-                    2400
-                ],
-                "head_row_vals": [
-                    28,
-                    24,
-                    18,
-                    10,
-                    0,
-                    null
-                ]
-            }
-        },
-        {
-            "id": 102,
-            "category": "Self-Priming Monoblock Pumps",
-            "name": "SUPER FLOW H",
-            "series": "Domestic Series",
-            "hp": "0.5 HP",
-            "price": "Call for Price",
-            "stock": "In Stock",
-            "image": "assets/Products/Selfpriming Monoblock Pump (Super Flow H).jpeg",
-            "table_data": {
-                "pipe_size": "25 x 25",
-                "hp_kw": "0.5 / 0.37",
-                "discharge_row_vals": [
-                    0,
-                    600,
-                    1200,
-                    1600,
-                    2200,
-                    2400
-                ],
-                "head_row_vals": [
-                    30,
-                    28,
-                    18,
-                    10,
-                    0,
-                    0
-                ]
-            }
-        },
-        {
-            "id": 103,
-            "category": "Self-Priming Monoblock Pumps",
-            "name": "MASTER FLOW",
-            "series": "Power Series",
-            "hp": "1.0 HP",
-            "price": "Call for Price",
-            "stock": "In Stock",
-            "image": "assets/Home/Self Priming Pumps.png",
-            "table_data": {
-                "pipe_size": "25 x 25",
-                "hp_kw": "1.0 / 0.75",
-                "discharge_row_vals": [
-                    0,
-                    600,
-                    1200,
-                    1600,
-                    2200,
-                    2400,
-                    2800,
-                    3200
-                ],
-                "head_row_vals": [
-                    40,
-                    34,
-                    30,
-                    24,
-                    16,
-                    12,
-                    6,
-                    0
-                ]
-            }
-        },
-        {
-            "id": 104,
-            "category": "Self-Priming Monoblock Pumps",
-            "name": "MEGA FLOW",
-            "series": "Power Series",
-            "hp": "1.0 HP",
-            "price": "Call for Price",
-            "stock": "In Stock",
-            "image": "assets/Home/Self Priming Pumps.png",
-            "table_data": {
-                "pipe_size": "25 x 25",
-                "hp_kw": "1.0 / 0.75",
-                "discharge_row_vals": [
-                    0,
-                    600,
-                    1200,
-                    1600,
-                    2200,
-                    2400,
-                    2800,
-                    3200
-                ],
-                "head_row_vals": [
-                    40,
-                    34,
-                    30,
-                    24,
-                    16,
-                    12,
-                    6,
-                    0
-                ]
-            }
-        },
         {
             "id": 105,
             "category": "Self-Priming Monoblock Pumps",
@@ -561,25 +433,61 @@
     ],
     "leads": [
         {
-            "id": 101,
-            "date": "Today, 10:42 AM",
-            "client": "Rahul Sharma",
-            "interest": "Micro Motors Batch",
-            "status": "New Lead"
+            "id": "44ba1840-ca7b-4d33-bd8a-e55ffe1786dc",
+            "date": "14/1/2026, 9:13:26 pm",
+            "client": "John Doe",
+            "interest": "Enquiry: I need 50 pumps for my factory...",
+            "contact": {
+                "email": "john@company.com",
+                "phone": "+91-9876543210"
+            },
+            "status": "Contacted"
+        }
+    ],
+    "categories": [
+        {
+            "id": 1,
+            "name": "Self-Priming Monoblock Pumps"
         },
         {
-            "id": 102,
-            "date": "Yesterday, 4:15 PM",
-            "client": "Greenfield Agrotech",
-            "interest": "Centrifugal Monoblock",
-            "status": "New Lead"
+            "id": 2,
+            "name": "Centrifugal Monoblock Pumps"
         },
         {
-            "id": 103,
-            "date": "Oct 24, 2026",
-            "client": "Metro Construction",
-            "interest": "Sewage Pump System",
-            "status": "New Lead"
+            "id": 3,
+            "name": "Supersuction Pumps"
+        },
+        {
+            "id": 4,
+            "name": "Openwell Submersible Pumps"
+        },
+        {
+            "id": 5,
+            "name": "Borewell Submersible Pumps"
+        },
+        {
+            "id": 6,
+            "name": "Shallow Well Pumps"
+        },
+        {
+            "id": 7,
+            "name": "Mini Booster Pumps"
+        }
+    ],
+    "dealers": [
+        {
+            "id": 1,
+            "name": "Siva Agencies",
+            "location": "Coimbatore",
+            "contact": "9876543210",
+            "status": "Active"
+        },
+        {
+            "id": 2,
+            "name": "Metro Hardwares",
+            "location": "Chennai",
+            "contact": "9840012345",
+            "status": "Pending"
         }
     ]
 }

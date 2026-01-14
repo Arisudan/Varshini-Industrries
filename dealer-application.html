@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="Logo.jpeg">
+    <title>Contact Us | Varshini Industries</title>
+    <meta name="description"
+        content="Get in touch with Varshini Industries for inquiries about our industrial pumping solutions.">
+
+    <!-- Google Fonts: Roboto Condensed & Open Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Roboto+Condensed:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="styles.css?v=41">
+
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="main-header">
+        <div class="top-bar">
+            <div class="container top-bar-flex">
+                <div class="support-info">
+                    <a href="mailto:info@varshiniindustrries.com" class="top-contact-link">
+                        <i class="fa-regular fa-envelope"></i> info@varshiniindustrries.com
+                    </a>
+                    <a href="tel:+918047838824" class="top-contact-link">
+                        <i class="fa-solid fa-phone"></i> +91-8047838824
+                    </a>
+                </div>
+                <div class="top-links">
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#" class="social-link-top"><i class="fa-brands fa-youtube"></i></a>
+                    <span style="opacity: 0.3; margin: 0 10px;">|</span>
+                    <a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin</a>
+                    <a href="assets/VARSHINI PRODUCT CATALOGUE.pdf" target="_blank"><i class="fa-solid fa-file-pdf"></i>
+                        Catalog</a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="navbar" id="navbar">
+            <div class="container nav-flex">
+                <a href="index.html" class="logo">
+                    <img src="Logo.jpeg" alt="Varshini Industrries Logo" class="logo-image">
+                </a>
+
+                <ul class="nav-links">
+                    <li class="nav-item-home"><a href="index.html">Home</a></li>
+
+                    <li class="has-dropdown nav-item-products">
+                        <a href="#" id="navProducts">Products <i class="fa-solid fa-chevron-down"></i></a>
+                        <!-- Mega Menu -->
+                        <div class="mega-menu">
+                            <div class="mega-content">
+                                <div class="mega-column">
+                                    <ul id="megaMenuCategories">
+                                        <!-- Populated via JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
+                    <li><a href="products.html?series=Solar">Solar Pump Series</a></li>
+                    <li><a href="products.html?category=Micro%20Motors">DC Series</a></li>
+                    <li class="nav-item-contact"><a href="contact.html" id="navContact" class="active">Contact</a></li>
+                    <li class="mobile-only-nav"><a href="login.html"><i class="fa-solid fa-user-shield"></i> Admin
+                            Login</a></li>
+                </ul>
+
+                <div class="nav-actions">
+                    <button class="mobile-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Title -->
+    <div class="page-header">
+        <div class="container">
+            <h1>BECOME A DEALER</h1>
+            <p>Partner with Varshini Industries and grow your business.</p>
+        </div>
+    </div>
+
+    <!-- Dealer Form Content -->
+    <div class="container" style="max-width: 800px; margin-top: 50px; margin-bottom: 50px;">
+        <div class="contact-wrapper-new" style="display: block;">
+
+            <div style="background: white; padding: 40px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
+                <h2 style="font-size: 1.5rem; margin-bottom: 10px; color: #0A2540;">Dealer Application Form</h2>
+                <p style="margin-bottom: 30px; color: #666;">Fill out the details below and our team will review your
+                    application.</p>
+
+                <form id="dealerForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Business Name *</label>
+                            <input type="text" name="businessName" class="form-input-custom" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Contact Person *</label>
+                            <input type="text" name="name" class="form-input-custom" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Email Address *</label>
+                            <input type="email" name="email" class="form-input-custom" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">Phone Number *</label>
+                            <input type="tel" name="phone" class="form-input-custom" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">City *</label>
+                            <input type="text" name="city" class="form-input-custom" required>
+                        </div>
+                        <div class="form-group-custom">
+                            <label class="form-label-custom">State *</label>
+                            <input type="text" name="state" class="form-input-custom" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">GST Number (Optional)</label>
+                        <input type="text" name="gst" class="form-input-custom">
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Business Type *</label>
+                        <select name="businessType" class="form-input-custom" style="appearance: auto;" required>
+                            <option value="" disabled selected>Select Business Type</option>
+                            <option value="Retailer">Retailer</option>
+                            <option value="Distributor">Distributor</option>
+                            <option value="Wholesaler">Wholesaler</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Additional Information</label>
+                        <textarea name="message" class="form-input-custom form-textarea-custom"
+                            placeholder="Tell us about your business experience..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-send-custom" style="width: 100%; margin-top: 10px;">
+                        <i class="fa-solid fa-check-circle"></i> Submit Application
+                    </button>
+                    <div id="formStatus" style="margin-top: 20px; text-align: center; display: none;"></div>
+                </form>
+
+                <script>
+                    document.getElementById('dealerForm').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        const form = e.target;
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const statusDiv = document.getElementById('formStatus');
+                        const formData = new FormData(form);
+
+                        const application = Object.fromEntries(formData.entries());
+
+                        // Disable button
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+                        try {
+                            const response = await fetch('/api/dealers', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(application)
+                            });
+
+                            if (response.ok) {
+                                statusDiv.style.display = 'block';
+                                statusDiv.style.color = '#28a745';
+                                statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> <strong>Application Received!</strong> We will contact you shortly.';
+                                form.reset();
+                            } else {
+                                throw new Error('Server error');
+                            }
+                        } catch (error) {
+                            statusDiv.style.display = 'block';
+                            statusDiv.style.color = '#dc3545';
+                            statusDiv.innerHTML = 'Error submitting application. Please try again.';
+                        } finally {
+                            submitBtn.disabled = false;
+                            if (statusDiv.style.color !== 'rgb(40, 167, 69)') { // if not success
+                                submitBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Submit Application';
+                            } else {
+                                submitBtn.innerHTML = 'Submitted';
+                                submitBtn.disabled = true;
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mega-footer" id="footer-section">
+        <div class="container footer-grid">
+            <div class="footer-col col-info">
+                <h4>CORPORATE OFFICE</h4>
+                <address>
+                    Varshini Industrries Pvt. Ltd.<br>
+                    1047/3, Bannariamman Nagar,<br>
+                    Kattur Street, Kalappatti,<br>
+                    Coimbatore - 641048<br>
+                    India <br><br>
+                    <strong>Email:</strong><br>
+                    <a href="mailto:info@varshiniindustrries.com"
+                        style="color:white; text-decoration:none;">info@varshiniindustrries.com</a><br>
+                    <a href="mailto:varshiniindustrries@gmail.com"
+                        style="color:white; text-decoration:none;">varshiniindustrries@gmail.com</a>
+                </address>
+                <div class="footer-socials">
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h4>PRODUCTS</h4>
+                <ul>
+                    <li><a href="products.html?category=Self-Priming Monoblock Pumps">Self-Priming Monoblocks</a></li>
+                    <li><a href="products.html?category=Centrifugal Monoblock Pumps">Centrifugal Monoblocks</a></li>
+                    <li><a href="products.html?category=Supersuction Pumps">Supersuction Pumps</a></li>
+                    <li><a href="products.html?category=Openwell Submersible Pumps">Openwell Submersibles</a></li>
+                    <li><a href="products.html?category=Borewell Submersible Pumps">Borewell Submersibles</a></li>
+                    <li><a href="products.html?category=Shallow Well Pumps">Shallow Well Pumps</a></li>
+                    <li><a href="products.html?category=Mini Booster Pumps">Mini Booster Pumps</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h4>QUICK LINKS</h4>
+                <ul>
+                    <li><a href="contact.html">Contact Us</a></li>
+                    <li><a href="login.html">Admin Login</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <!-- Newsletter Removed -->
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="copyright">&copy; 2026 Varshini Industrries. All Rights Reserved.</div>
+                <div class="legal-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Sitemap</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 7. Floating Action Buttons -->
+    <div class="floating-actions">
+        <!-- Cart Float -->
+        <a href="#" class="float-btn float-cart" id="cartFloat">
+            <i class="fa-solid fa-cart-shopping"></i>
+            <span class="cart-count" id="cartCount">0</span>
+        </a>
+    </div>
+
+    <!-- Mobile Bottom Navigation (App Style) -->
+    <nav class="mobile-bottom-nav">
+        <a href="index.html" class="bottom-nav-item">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavCats">
+            <i class="fa-solid fa-grip"></i>
+            <span>Categories</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottomNavSearch">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search</span>
+        </a>
+        <a href="contact.html" class="bottom-nav-item active">
+            <i class="fa-solid fa-user"></i>
+            <span>Contact</span>
+        </a>
+    </nav>
+
+    <!-- Full Screen Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-overlay-header">
+            <div class="logo">
+                <img src="Logo.jpeg" alt="Logo" style="height: 40px;">
+            </div>
+            <button class="close-search-overlay" id="closeSearchOverlay"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="search-overlay-content">
+            <div class="search-overlay-input-group">
+                <input type="text" id="overlaySearchInput" placeholder="What are you looking for?">
+                <button id="overlaySearchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div class="popular-searches">
+                <h4 class="popular-categories-title">TOP CATEGORIES</h4>
+                <div class="popular-tags">
+                    <a href="#" class="popular-tag"
+                        onclick="filterCategory('Self-Priming Monoblock Pumps')">Monoblocks</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Openwell Submersible Pumps')">Openwell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Borewell Submersible Pumps')">Borewell</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Mini Booster Pumps')">Booster</a>
+                    <a href="#" class="popular-tag" onclick="filterCategory('Solar')">Solar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar-overlay" id="cartOverlay"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Enquiry Cart</h3>
+            <button class="close-cart" id="closeCart"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- Dynamic Items Here -->
+            <div class="empty-cart-msg">Your cart is empty.</div>
+        </div>
+        <div class="cart-footer">
+            <button class="btn-enquiry" id="btnEnquiry" onclick="sendEnquiry()">
+                <i class="fa-brands fa-whatsapp"></i> Send Enquiry
+            </button>
+        </div>
+    </div>
+
+    <!-- Product Specs Modal -->
+    <div id="specsModal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic Content Loaded Here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=41"></script>
+    </script>
+    </script>
+    </script>
+    </script>
+    <script>
+        // Contact Page Form Logic
+        const contactForm = document.getElementById('contactPageForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('Thank you! Your message has been sent to our team.');
+                contactForm.reset();
+            });
+        }
+    </script>
+</body>
+
+</html>

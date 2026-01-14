@@ -10,6 +10,7 @@
         href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="admin.css">
 </head>
 
@@ -25,12 +26,13 @@
             <li class="active" data-view="dashboard"><a href="#"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
             </li>
             <li data-view="products"><a href="#"><i class="fa-solid fa-box-open"></i> Product Catalog</a></li>
+            <li data-view="categories"><a href="#"><i class="fa-solid fa-tags"></i> Categories</a></li>
             <li data-view="dealers">
                 <a href="#">
                     <i class="fa-solid fa-users-gear"></i> Dealer Requests
                 </a>
             </li>
-            <li data-view="leads"><a href="#"><i class="fa-solid fa-envelope-open-text"></i> Inquiries/Leads</a></li>
+            <li data-view="leads"><a href="#"><i class="fa-solid fa-envelope-open-text"></i> Inquiries</a></li>
             <li data-view="settings"><a href="#"><i class="fa-solid fa-sliders"></i> Settings</a></li>
         </ul>
 
@@ -62,6 +64,42 @@
             <div class="stats-grid" id="statsGrid">
                 <!-- Populated by JS -->
             </div>
+
+            <!-- Analytics Charts -->
+            <div class="analytics-section">
+                <h3 style="color: var(--navy); margin-bottom: 20px; font-size: 1.3rem;">
+                    <i class="fa-solid fa-chart-line"></i> Analytics Overview
+                </h3>
+
+                <div class="charts-grid">
+                    <!-- Lead Trends Chart -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h4>Lead Trends (Last 7 Days)</h4>
+                            <i class="fa-solid fa-chart-line" style="color: var(--teal);"></i>
+                        </div>
+                        <canvas id="leadTrendsChart"></canvas>
+                    </div>
+
+                    <!-- Status Distribution Chart -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h4>Lead Status Distribution</h4>
+                            <i class="fa-solid fa-chart-pie" style="color: var(--teal);"></i>
+                        </div>
+                        <canvas id="statusDistChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Product Categories Chart -->
+                <div class="chart-container" style="margin-top: 20px;">
+                    <div class="chart-header">
+                        <h4>Popular Product Categories</h4>
+                        <i class="fa-solid fa-chart-bar" style="color: var(--teal);"></i>
+                    </div>
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
         </div>
 
         <!-- VIEW: PRODUCTS -->
@@ -69,23 +107,40 @@
             <section class="panel-section">
                 <div class="panel-header">
                     <h3>Product Management</h3>
-                    <button class="btn btn-primary" onclick="openAddProductModal()"><i class="fa-solid fa-plus"></i> Add
-                        New Pump</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline" onclick="exportProductsToCSV()" title="Export to CSV">
+                            <i class="fa-solid fa-download"></i> Export CSV
+                        </button>
+                        <button class="btn btn-primary" onclick="openAddProductModal()"><i class="fa-solid fa-plus"></i>
+                            Add
+                            New Pump</button>
+                    </div>
+                </div>
+                <div id="productCatalogContainer">
+                    <p style="padding: 20px; text-align: center; color: #666;">Loading products...</p>
+                </div>
+            </section>
+        </div>
+
+
+        <!-- VIEW: CATEGORIES -->
+        <div id="view-categories" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Manage Categories</h3>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()"><i class="fa-solid fa-plus"></i>
+                        Add Category</button>
                 </div>
                 <div class="table-responsive">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Image</th>
-                                <th>Model Name</th>
-                                <th>Category</th>
-                                <th>HP / Spec</th>
-                                <th>Price (INR)</th>
-                                <th>Stock Status</th>
+                                <th>Category Name</th>
+                                <th>Products Count</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="productTableBody">
+                        <tbody id="categoriesTableBody">
                             <!-- Populated by JS -->
                         </tbody>
                     </table>
@@ -97,8 +152,40 @@
         <div id="view-leads" class="admin-view" style="display: none;">
             <section class="panel-section">
                 <div class="panel-header">
-                    <h3>Recent Leads (Quick View)</h3>
-                    <button class="btn btn-outline">View All</button>
+                    <h3>Customer Inquiries</h3>
+                    <button class="btn btn-outline" onclick="exportLeadsToCSV()" title="Export to CSV">
+                        <i class="fa-solid fa-download"></i> Export CSV
+                    </button>
+                </div>
+
+                <!-- Filter and Search Controls -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                    <!-- Filter Buttons -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="filter-btn active" data-status="all" onclick="filterLeads('all')"
+                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: #00B4D8; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                            All Leads
+                        </button>
+                        <button class="filter-btn" data-status="New Lead" onclick="filterLeads('New Lead')"
+                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                            New
+                        </button>
+                        <button class="filter-btn" data-status="Contacted" onclick="filterLeads('Contacted')"
+                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                            Contacted
+                        </button>
+                        <button class="filter-btn" data-status="Sold" onclick="filterLeads('Sold')"
+                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                            Sold
+                        </button>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                        <input type="text" placeholder="🔍 Search leads by name, email, or phone..."
+                            oninput="searchLeads(this.value)"
+                            style="width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="data-table plain">
@@ -108,6 +195,7 @@
                                 <th>Client Name</th>
                                 <th>Interested In</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="leadsTableBody">
@@ -122,11 +210,32 @@
         <div id="view-dealers" class="admin-view" style="display: none;">
             <section class="panel-section">
                 <div class="panel-header">
-                    <h3>Dealer Requests</h3>
+                    <h3>Dealer Applications</h3>
+                    <div>
+                        <span style="font-size:0.9rem; color:#666; margin-right:10px;">Filter:</span>
+                        <button class="btn btn-sm btn-outline" onclick="filterDealers('all')">All</button>
+                        <button class="btn btn-sm btn-outline" onclick="filterDealers('Pending')">Pending</button>
+                        <button class="btn btn-sm btn-outline" onclick="filterDealers('Approved')">Approved</button>
+                    </div>
                 </div>
-                <div style="padding: 40px; text-align: center; color: #888;">
-                    <i class="fa-solid fa-users-gear" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                    <p>New Dealer Application module coming soon.</p>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name / Business</th>
+                                <th>Contact Info</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dealersTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
         </div>
@@ -246,7 +355,14 @@
                     <input type="text" name="name" required placeholder="e.g. Titan V6-500">
                 </div>
                 <div class="form-group">
-                    <label>Series / Category</label>
+                    <label>Category</label>
+                    <select name="category" id="productCategory" required
+                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Select Category</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Series</label>
                     <input type="text" name="series" required placeholder="e.g. Stainless Series">
                 </div>
                 <div class="form-group">
@@ -266,8 +382,15 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Image Filename</label>
-                    <input type="text" name="image" placeholder="Default: titan_pump_v6.png">
+                    <label>Product Image</label>
+                    <input type="file" name="image" id="imageFileInput" accept="image/*"
+                        style="padding: 5px; border: 1px solid #ddd; width: 100%; border-radius: 4px;">
+                    <input type="hidden" name="existingImage" id="currentImagePath">
+                    <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                        <p style="font-size: 0.8rem; margin-bottom: 5px;">Selected Image:</p>
+                        <img id="imagePreview" src="" alt="Preview"
+                            style="max-height: 100px; border-radius: 4px; border: 1px solid #ddd;">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
@@ -277,7 +400,29 @@
         </div>
     </div>
 
+    <!-- Add Category Modal -->
+    <div class="modal-overlay" id="addCategoryModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Add New Category</h3>
+                <button class="close-modal" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <form id="addCategoryForm">
+                <input type="hidden" name="id" id="categoryId">
+                <div class="form-group">
+                    <label>Category Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Solar Pumps">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeCategoryModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="admin.js"></script>
+    <script src="charts.js"></script>
 </body>
 
 </html>

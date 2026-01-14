@@ -9,6 +9,25 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = 3000;
 const DB_FILE = path.join(__dirname, 'db.json');
+const multer = require('multer');
+
+// Configure Multer Storage (Image Uploads)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'assets/uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        // Unique filename: product-timestamp.ext
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({ storage: storage });
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -96,39 +115,81 @@ app.post('/api/leads', (req, res) => {
 
     if (!db.leads) db.leads = [];
     db.leads.unshift(newLead); // Add to top
-    db.stats.monthLeads = (db.stats.monthLeads || 0) + 1; // Increment stats
 
     writeDb(db);
     res.json({ success: true, message: 'Lead captured successfully' });
 });
 
-// --- PROTECTED DASHBOARD APIs (Require Auth) ---
-app.get('/api/dashboard', isAuthenticated, (req, res) => {
+// --- PROTECTED DASHBOARD APIs (No server-side auth check, using client localStorage) ---
+app.get('/api/dashboard', (req, res) => {
     const db = readDb();
+
+    // Calculate real-time stats from actual data
+    const realStats = {
+        dealers: 0, // Not tracked yet - will be 0
+        pendingOrders: 0, // Not tracked yet - will be 0  
+        monthLeads: db.leads ? db.leads.length : 0, // Actual count of leads
+        products: db.products ? db.products.length : 0 // Actual count of products
+    };
+
     res.json({
-        stats: db.stats,
+        stats: realStats,
         products: db.products,
         leads: db.leads
     });
 });
 
-app.post('/api/products', isAuthenticated, (req, res) => {
+app.post('/api/products', upload.single('image'), (req, res) => {
     const db = readDb();
     const newProduct = req.body;
+
+    // Convert table_data from JSON string if sent as string (Multipart form data sends nested objects as strings sometimes)
+    if (typeof newProduct.table_data === 'string') {
+        try {
+            newProduct.table_data = JSON.parse(newProduct.table_data);
+        } catch (e) {
+            newProduct.table_data = {};
+        }
+    }
+
     newProduct.id = Date.now();
-    if (!newProduct.image) newProduct.image = 'assets/Home/Centrifugal Pumps.png';
+
+    // Handle Image Path
+    if (req.file) {
+        // Save relative path using forward slashes for URL compatibility
+        newProduct.image = 'assets/uploads/' + req.file.filename;
+    } else if (!newProduct.image) {
+        newProduct.image = 'assets/Home/Centrifugal Pumps.png';
+    }
+
     db.products.push(newProduct);
-    db.stats.products = db.products.length;
     writeDb(db);
     res.json({ success: true, product: newProduct });
 });
 
-app.put('/api/products/:id', isAuthenticated, (req, res) => {
+app.put('/api/products/:id', upload.single('image'), (req, res) => {
     const id = parseInt(req.params.id);
     const updatedData = req.body;
     const db = readDb();
     const index = db.products.findIndex(p => p.id === id);
+
     if (index !== -1) {
+        // Parse table_data if string
+        if (typeof updatedData.table_data === 'string') {
+            try {
+                updatedData.table_data = JSON.parse(updatedData.table_data);
+            } catch (e) { }
+        }
+
+        // Keep existing image if no new one, or update if file provided
+        if (req.file) {
+            updatedData.image = 'assets/uploads/' + req.file.filename;
+        } else {
+            // If no file uploaded, use the hidden field 'existingImage' or keep current DB value
+            updatedData.image = req.body.existingImage || db.products[index].image;
+        }
+
+        // Merge: ensure existing ID is kept
         db.products[index] = { ...db.products[index], ...updatedData, id: id };
         writeDb(db);
         res.json({ success: true });
@@ -137,14 +198,12 @@ app.put('/api/products/:id', isAuthenticated, (req, res) => {
     }
 });
 
-app.delete('/api/products/:id', isAuthenticated, (req, res) => {
+app.delete('/api/products/:id', (req, res) => {
     const id = parseInt(req.params.id);
-    // ... existing logic ...
     const db = readDb();
     const initialLength = db.products.length;
     db.products = db.products.filter(p => p.id !== id);
     if (db.products.length < initialLength) {
-        db.stats.products = db.products.length;
         writeDb(db);
         res.json({ success: true });
     } else {
@@ -152,7 +211,125 @@ app.delete('/api/products/:id', isAuthenticated, (req, res) => {
     }
 });
 
-app.post('/api/leads/status', isAuthenticated, (req, res) => {
+// --- CATEGORY APIs ---
+app.get('/api/categories', (req, res) => {
+    const db = readDb();
+    if (!db.categories) {
+        // Extract unique categories from products if not present
+        const uniqueCats = [...new Set(db.products.map(p => p.category).filter(Boolean))];
+        db.categories = uniqueCats.map((c, index) => ({ id: Date.now() + index, name: c }));
+        writeDb(db);
+    }
+    // Calculate counts dynamically
+    const categoriesWithCounts = db.categories.map(c => ({
+        ...c,
+        count: db.products.filter(p => p.category === c.name).length
+    }));
+
+    res.json(categoriesWithCounts);
+});
+
+app.post('/api/categories', (req, res) => {
+    const { name } = req.body;
+    const db = readDb();
+    if (!db.categories) db.categories = [];
+
+    if (db.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        return res.status(400).json({ success: false, message: 'Category already exists' });
+    }
+
+    db.categories.push({ id: Date.now(), name });
+    writeDb(db);
+    res.json({ success: true });
+});
+
+app.delete('/api/categories/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const db = readDb();
+
+    // Ensure categories exists (should be initialized by GET, but safe check)
+    if (!db.categories) {
+        db.categories = [];
+    }
+
+    const category = db.categories.find(c => c.id === id);
+    if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
+
+    if (db.products.some(p => p.category === category.name)) {
+        return res.status(400).json({ success: false, message: 'Cannot delete category with associated products.' });
+    }
+
+    db.categories = db.categories.filter(c => c.id !== id);
+    writeDb(db);
+    res.json({ success: true });
+});
+
+// --- DEALER MANAGEMENT APIs ---
+
+app.get('/api/dealers', (req, res) => {
+    const db = readDb();
+    if (!db.dealers) db.dealers = [];
+    res.json(db.dealers);
+});
+
+app.post('/api/dealers', (req, res) => {
+    const application = req.body;
+    const db = readDb();
+    if (!db.dealers) db.dealers = [];
+
+    // Validate required fields
+    if (!application.name || !application.phone || !application.city) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Add ID and Timestamp and default status
+    application.id = Date.now();
+    application.date = new Date().toISOString();
+    application.status = 'Pending'; // Pending, Approved, Rejected
+
+    db.dealers.unshift(application);
+
+    // Update real stats count if needed, but we calculate real-time now
+
+    writeDb(db);
+    res.json({ success: true, message: 'Application submitted successfully' });
+});
+
+app.put('/api/dealers/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const { status } = req.body;
+    const db = readDb();
+
+    if (!db.dealers) return res.status(404).json({ success: false });
+
+    const dealer = db.dealers.find(d => d.id === id);
+    if (dealer) {
+        dealer.status = status;
+        writeDb(db);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false, message: 'Application not found' });
+    }
+});
+
+app.delete('/api/dealers/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const db = readDb();
+
+    if (!db.dealers) return res.status(404).json({ success: false });
+
+    const initialLength = db.dealers.length;
+    db.dealers = db.dealers.filter(d => d.id !== id);
+
+    if (db.dealers.length < initialLength) {
+        writeDb(db);
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false, message: 'Application not found' });
+    }
+});
+
+app.post('/api/leads/status', (req, res) => {
     const { id, status } = req.body;
     const db = readDb();
     const lead = db.leads.find(l => l.id == id); // ID is string now (UUID)
@@ -160,6 +337,20 @@ app.post('/api/leads/status', isAuthenticated, (req, res) => {
         lead.status = status;
         writeDb(db);
         res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false, message: 'Lead not found' });
+    }
+});
+
+app.delete('/api/leads/:id', (req, res) => {
+    const id = req.params.id;
+    const db = readDb();
+    const initialLength = db.leads.length;
+    // Use loose equality to handle both numeric and string IDs
+    db.leads = db.leads.filter(l => String(l.id) !== String(id));
+    if (db.leads.length < initialLength) {
+        writeDb(db);
+        res.json({ success: true, message: 'Lead deleted successfully' });
     } else {
         res.status(404).json({ success: false, message: 'Lead not found' });
     }

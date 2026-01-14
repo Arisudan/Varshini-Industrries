@@ -104,17 +104,23 @@
                 <form id="contactPageForm">
                     <div class="form-group-custom">
                         <label class="form-label-custom">Name</label>
-                        <input type="text" class="form-input-custom" placeholder="Your Name" required>
+                        <input type="text" name="name" class="form-input-custom" placeholder="Your Name" required>
                     </div>
 
                     <div class="form-group-custom">
                         <label class="form-label-custom">Email</label>
-                        <input type="email" class="form-input-custom" placeholder="your@email.com" required>
+                        <input type="email" name="email" class="form-input-custom" placeholder="your@email.com"
+                            required>
+                    </div>
+
+                    <div class="form-group-custom">
+                        <label class="form-label-custom">Phone (optional)</label>
+                        <input type="tel" name="phone" class="form-input-custom" placeholder="+91-XXXXXXXXXX">
                     </div>
 
                     <div class="form-group-custom">
                         <label class="form-label-custom">I am interested in</label>
-                        <select class="form-input-custom" style="appearance: auto;" required>
+                        <select name="interest" class="form-input-custom" style="appearance: auto;" required>
                             <option value="" disabled selected>Select a Product Category</option>
                             <option value="Self-Priming Monoblock Pumps">Self-Priming Monoblock Pumps</option>
                             <option value="Centrifugal Monoblock Pumps">Centrifugal Monoblock Pumps</option>
@@ -131,12 +137,67 @@
 
                     <div class="form-group-custom">
                         <label class="form-label-custom">Message</label>
-                        <textarea class="form-input-custom form-textarea-custom"
+                        <textarea name="message" class="form-input-custom form-textarea-custom"
                             placeholder="How can we help?"></textarea>
                     </div>
 
-                    <button type="submit" class="btn-send-custom">Send Message</button>
+                    <button type="submit" class="btn-send-custom">
+                        <i class="fa-solid fa-paper-plane"></i> Send Message
+                    </button>
+                    <div id="formStatus" style="margin-top: 15px; display: none;"></div>
                 </form>
+
+                <script>
+                    document.getElementById('contactPageForm').addEventListener('submit', async (e) => {
+                        e.preventDefault();
+
+                        const form = e.target;
+                        const submitBtn = form.querySelector('.btn-send-custom');
+                        const statusDiv = document.getElementById('formStatus');
+                        const formData = new FormData(form);
+
+                        const lead = {
+                            name: formData.get('name'),
+                            email: formData.get('email'),
+                            phone: formData.get('phone') || 'Not provided',
+                            interest: formData.get('interest'),
+                            message: formData.get('message') || ''
+                        };
+
+                        // Disable button
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+                        try {
+                            const response = await fetch('http://localhost:3000/api/leads', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(lead)
+                            });
+
+                            if (response.ok) {
+                                statusDiv.style.display = 'block';
+                                statusDiv.style.color = '#28a745';
+                                statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> <strong>Message sent successfully!</strong> We\'ll get back to you soon.';
+                                form.reset();
+
+                                // Hide success message after 5 seconds
+                                setTimeout(() => {
+                                    statusDiv.style.display = 'none';
+                                }, 5000);
+                            } else {
+                                throw new Error('Server error');
+                            }
+                        } catch (error) {
+                            statusDiv.style.display = 'block';
+                            statusDiv.style.color = '#dc3545';
+                            statusDiv.innerHTML = '<i class="fa-solid fa-exclamation-circle"></i> <strong>Error!</strong> Unable to send message. Please try again or email us directly at info@varshiniindustrries.com';
+                        } finally {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Send Message';
+                        }
+                    });
+                </script>
             </div>
 
             <!-- Right Column: Details & Map -->
