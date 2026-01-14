@@ -902,6 +902,22 @@ window.searchLeads = function (query) {
 
 async function loadCategories() {
     try {
+        if (isStaticMode()) {
+            const db = await getStaticDB();
+            let categories = db.categories || [];
+            const products = db.products || [];
+
+            // Calculate Counts locally
+            const categoriesWithCounts = categories.map(c => ({
+                ...c,
+                count: products.filter(p => p.category === c.name).length
+            }));
+
+            renderCategories(categoriesWithCounts);
+            populateCategoryDropdown(categoriesWithCounts);
+            return;
+        }
+
         const response = await fetch(`${API_BASE}/categories`, {
             headers: getAuthHeader()
         });
@@ -966,59 +982,9 @@ window.closeCategoryModal = () => {
 };
 
 // Add Category Form Submit
-const addCategoryForm = document.getElementById('addCategoryForm');
-if (addCategoryForm) {
-    addCategoryForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(addCategoryForm);
-        const name = formData.get('name');
+// Duplicate category logic removed. Implemented at the end of file.
 
-        try {
-            const response = await fetch(`${API_BASE}/categories`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeader()
-                },
-                body: JSON.stringify({ name })
-            });
-            await handleResponse(response);
-            const data = await response.json();
-
-            if (response.ok) {
-                closeCategoryModal();
-                loadCategories(); // Refresh list and dropdown
-                alert('✅ Category added successfully!');
-            } else {
-                throw new Error(data.message || 'Server error');
-            }
-        } catch (error) {
-            alert('❌ Error adding category: ' + error.message);
-        }
-    });
-}
-
-window.deleteCategory = async (id) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/categories/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-        const data = await response.json();
-
-        if (response.ok) {
-            loadCategories();
-            alert('✅ Category deleted successfully!');
-        } else {
-            alert('❌ Error: ' + data.message);
-        }
-    } catch (error) {
-        alert('❌ Error deleting category: ' + error.message);
-    }
-};
+// Duplicate deleteCategory logic removed.
 
 // Load categories on start
 // --- WARRANTY REQUESTS ---
@@ -1149,5 +1115,107 @@ window.deleteWarranty = async (id) => {
 }
 
 // INITIAL LOAD
+// INITIAL LOAD
 loadCategories();
 loadWarranties();
+
+// --- CATEGORY ACTIONS ---
+
+const addCategoryForm = document.getElementById('addCategoryForm');
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = addCategoryForm.name.value;
+
+        if (isStaticMode()) {
+            const db = await getStaticDB();
+            if (!db.categories) db.categories = [];
+
+            if (db.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                alert('Category already exists');
+                return;
+            }
+
+            db.categories.push({ id: Date.now(), name });
+            persistStaticDB();
+
+            alert('✅ Static Mode: Category added.');
+            closeCategoryModal();
+            loadCategories();
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
+                body: JSON.stringify({ name })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert('✅ Category added successfully!');
+                closeCategoryModal();
+                loadCategories();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            alert('Error adding category: ' + error.message);
+        }
+    });
+}
+
+function closeCategoryModal() {
+    const modal = document.getElementById('addCategoryModal');
+    const form = document.getElementById('addCategoryForm');
+    if (modal) modal.style.display = 'none';
+    if (form) form.reset();
+}
+
+window.deleteCategory = async (id) => {
+    if (isStaticMode()) {
+        if (!confirm('Delete this category? (Static Mode)')) return;
+        const db = await getStaticDB();
+
+        const catName = db.categories.find(c => c.id === id)?.name;
+        if (catName && db.products.some(p => p.category === catName)) {
+            alert('Cannot delete category with associated products.');
+            return;
+        }
+
+        db.categories = db.categories.filter(c => c.id !== id);
+        persistStaticDB();
+
+        alert('✅ Static Mode: Category deleted.');
+        loadCategories();
+        return;
+    }
+
+    if (!confirm('Delete this category? This cannot be undone.')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/categories/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeader()
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert('✅ Category deleted!');
+            loadCategories();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        alert('Error deleting category: ' + error.message);
+    }
+};
+
+window.openAddCategoryModal = () => {
+    const modal = document.getElementById('addCategoryModal');
+    if (modal) modal.style.display = 'flex';
+};

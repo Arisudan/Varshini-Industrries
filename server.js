@@ -149,18 +149,25 @@ app.post('/api/leads', (req, res) => {
 app.get('/api/dashboard', isAuthenticated, (req, res) => {
     const db = readDb();
 
-    // Calculate real-time stats from actual data
-    const realStats = {
-        dealers: 0, // Not tracked yet - will be 0
-        pendingOrders: 0, // Not tracked yet - will be 0  
-        monthLeads: db.leads ? db.leads.length : 0, // Actual count of leads
-        products: db.products ? db.products.length : 0 // Actual count of products
-    };
+    // Calculate categories with counts for dashboard
+    let categories = db.categories || [];
+    if (categories.length === 0 && db.products) {
+        // Extract unique categories from products if none defined
+        const uniqueCats = [...new Set(db.products.map(p => p.category).filter(Boolean))];
+        categories = uniqueCats.map((c, index) => ({ id: Date.now() + index, name: c }));
+    }
+
+    const categoriesWithCounts = categories.map(c => ({
+        ...c,
+        count: db.products.filter(p => p.category === c.name).length
+    }));
 
     res.json({
         stats: realStats,
-        products: db.products,
-        leads: db.leads
+        products: db.products || [],
+        leads: db.leads || [],
+        warranties: db.warranties || [],
+        categories: categoriesWithCounts
     });
 });
 
