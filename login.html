@@ -180,25 +180,48 @@
             btn.innerText = 'AUTHENTICATING...';
             errorMsg.style.display = 'none';
 
+            // Check if we are on GitHub Pages or local static host
+            const isStaticHost = window.location.hostname.includes('github.io') ||
+                window.location.protocol === 'file:';
+
+            // Helper to handle client-side success
+            const handleLocalSuccess = (user) => {
+                localStorage.setItem('auth_token', 'mock_token_static_mode');
+                localStorage.setItem('user_name', user.name);
+                localStorage.setItem('static_mode', 'true');
+                window.location.href = 'admin.html';
+            };
+
             try {
+                // Try real API first
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
+                }).catch(err => {
+                    // If fetch fails (e.g. 404 on GitHub Pages), we handle it in the catch
+                    return { ok: false, isNetworkError: true };
                 });
 
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    // Success: Store JWT Token and User Info
+                if (response.ok) {
+                    const data = await response.json();
                     localStorage.setItem('auth_token', data.token);
                     localStorage.setItem('user_name', data.user.name);
-
-                    // Redirect to Admin Panel
+                    localStorage.setItem('static_mode', 'false');
                     window.location.href = 'admin.html';
                 } else {
-                    // Failure
-                    throw new Error(data.message || 'Invalid Credentials');
+                    // If backend is missing (GitHub Pages), use static fallback
+                    if (isStaticHost || response.isNetworkError) {
+                        console.log("No backend detected. Using Static Mode credentials.");
+                        if (username === 'admin' && password === 'admin123') {
+                            handleLocalSuccess({ name: 'Admin (Demo)' });
+                        } else {
+                            throw new Error('Invalid Credentials (Demo Mode)');
+                        }
+                    } else {
+                        const data = await response.json().catch(() => ({}));
+                        throw new Error(data.message || 'Invalid Credentials');
+                    }
                 }
             } catch (error) {
                 errorMsg.innerText = error.message;

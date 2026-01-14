@@ -313,6 +313,23 @@
                     </div>
                 </div>
 
+                <div class="settings-group">
+                    <h4 class="blue"><i class="fa-solid fa-cloud-arrow-up"></i> Sync & Deployment</h4>
+                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                        If you are using GitHub Pages, changes made here are saved to your browser only.
+                        To update the website for everyone, download your updated database and replace the
+                        <code>db.json</code> file in your repository.
+                    </p>
+                    <button class="btn btn-primary" onclick="exportDB()">
+                        <i class="fa-solid fa-download"></i> Download Updated db.json
+                    </button>
+                    <button class="btn btn-outline"
+                        onclick="localStorage.removeItem('varshini_db_cache'); location.reload();"
+                        style="margin-left: 10px;">
+                        <i class="fa-solid fa-trash-can"></i> Reset Local Cache
+                    </button>
+                </div>
+
                 <button class="btn btn-primary" onclick="saveSettings()" style="margin-top: 20px;">
                     <i class="fa-solid fa-save"></i> Save All Settings
                 </button>

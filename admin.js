@@ -1,22 +1,50 @@
+// Update API Base for dynamic environments
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE = isLocal ? 'http://localhost:3000/api' : '/api';
 
-// Admin Dashboard - Works with Express Server API
-
-const API_BASE = 'http://localhost:3000/api';
-
-// Helper to get Auth Headers
-function getAuthHeader() {
-    const token = localStorage.getItem('auth_token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
+// Helper to check if we are in static mode (e.g. GitHub Pages)
+function isStaticMode() {
+    return localStorage.getItem('static_mode') === 'true';
 }
 
-// Global Response Handler for Auth Errors
-async function handleResponse(response) {
-    if (response.status === 401 || response.status === 403) {
-        localStorage.removeItem('auth_token');
-        window.location.href = 'login.html';
-        return null;
+// VIRTUAL DATABASE FOR STATIC MODE
+let staticDB = null;
+
+async function getStaticDB() {
+    if (staticDB) return staticDB;
+
+    const cached = localStorage.getItem('varshini_db_cache');
+    if (cached) {
+        staticDB = JSON.parse(cached);
+        return staticDB;
     }
-    return response;
+
+    // Initial load from file
+    try {
+        const res = await fetch('./db.json');
+        staticDB = await res.json();
+        persistStaticDB();
+        return staticDB;
+    } catch (e) {
+        return { products: [], leads: [], warranties: [], categories: [] };
+    }
+}
+
+function persistStaticDB() {
+    if (staticDB) {
+        localStorage.setItem('varshini_db_cache', JSON.stringify(staticDB));
+    }
+}
+
+function exportDB() {
+    if (!staticDB) return;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(staticDB, null, 4));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "db.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -127,8 +155,43 @@ function setupViewSwitching() {
 async function refreshDashboard() {
     try {
         const token = localStorage.getItem('auth_token');
+
+        // STATIC MODE PERSISTENCE
+        if (isStaticMode()) {
+            console.log("Admin running in Static/Demo mode.");
+            const db = await getStaticDB();
+
+            // Mock dynamic stats based on JSON content
+            const products = db.products || [];
+            const leads = db.leads || [];
+            const warranties = db.warranties || [];
+            const categories = db.categories || [];
+
+            const mockStats = {
+                products: products.length,
+                monthLeads: leads.length,
+                totalWarranties: warranties.length,
+                newWarranties: warranties.filter(w => w.status === 'Pending').length
+            };
+
+            renderStats(mockStats);
+            renderProducts(products);
+            renderLeads(leads);
+            renderWarranties(warranties);
+            renderCategories(categories);
+
+            if (typeof initializeCharts === 'function') {
+                setTimeout(() => initializeCharts(), 100);
+            }
+            return;
+        }
+
+        // LIVE API MODE
         const response = await fetch(`${API_BASE}/dashboard`, {
             headers: { 'Authorization': `Bearer ${token}` }
+        }).catch(err => {
+            // Treat connection failures as an indicator to switch to static or show error
+            throw new Error("CONNECTION_ERROR");
         });
 
         if (response.status === 401 || response.status === 403) {
@@ -136,21 +199,25 @@ async function refreshDashboard() {
             return;
         }
 
-        if (!response.ok) {
-            throw new Error('Server returned ' + response.status);
-        }
+        if (!response.ok) throw new Error('Server returned ' + response.status);
 
         const data = await response.json();
         renderStats(data.stats);
         renderProducts(data.products);
         renderLeads(data.leads);
+        renderWarranties(data.warranties);
+        renderCategories(data.categories || []);
 
         if (typeof initializeCharts === 'function') {
             setTimeout(() => initializeCharts(), 100);
         }
     } catch (error) {
         console.error('Error fetching data:', error);
-        showError('Unable to connect to database. Please ensure the server is running on port 3000.');
+        if (error.message === "CONNECTION_ERROR") {
+            showError('Unable to connect to live database. You are in Demo Mode. Changes will only save locally in your browser.');
+        } else {
+            showError('Something went wrong. ' + error.message);
+        }
     }
 }
 
@@ -424,12 +491,20 @@ window.openAddProductModal = () => {
 
 window.editProduct = async (id) => {
     try {
-        const response = await fetch(`${API_BASE}/dashboard`, {
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-        const data = await response.json();
-        const product = data.products.find(p => p.id === id);
+        let products = [];
+        if (isStaticMode()) {
+            const res = await fetch('./db.json');
+            const data = await res.json();
+            products = data.products || [];
+        } else {
+            const response = await fetch(`${API_BASE}/dashboard`, {
+                headers: getAuthHeader()
+            });
+            await handleResponse(response);
+            const data = await response.json();
+            products = data.products || [];
+        }
+        const product = products.find(p => p.id === id);
 
         if (!product) {
             alert('Product not found');
@@ -467,6 +542,33 @@ window.editProduct = async (id) => {
 };
 
 async function saveProduct(formData) {
+    if (isStaticMode()) {
+        const db = await getStaticDB();
+        const id = formData.get('id');
+        const newProduct = {
+            id: id ? parseInt(id) : Date.now(),
+            name: formData.get('name'),
+            category: formData.get('category'),
+            series: formData.get('series'),
+            hp: formData.get('hp'),
+            price: formData.get('price'),
+            stock: formData.get('stock'),
+            image: formData.get('currentImage') || 'assets/placeholder.png'
+        };
+
+        if (id) {
+            const idx = db.products.findIndex(p => p.id === parseInt(id));
+            if (idx !== -1) db.products[idx] = newProduct;
+        } else {
+            db.products.push(newProduct);
+        }
+
+        persistStaticDB();
+        alert('✅ Static Mode: Product saved to browser storage.');
+        closeModal();
+        refreshDashboard();
+        return;
+    }
     const id = formData.get('id');
 
     try {
@@ -500,6 +602,15 @@ async function saveProduct(formData) {
 }
 
 window.deleteProduct = async (id) => {
+    if (isStaticMode()) {
+        if (!confirm('Are you sure you want to delete this product? (Static Mode)')) return;
+        const db = await getStaticDB();
+        db.products = db.products.filter(p => p.id !== id);
+        persistStaticDB();
+        alert('✅ Static Mode: Product removed from browser storage.');
+        refreshDashboard();
+        return;
+    }
     if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
 
     try {
@@ -521,6 +632,14 @@ window.deleteProduct = async (id) => {
 };
 
 window.updateLeadStatus = async (id, newStatus) => {
+    if (isStaticMode()) {
+        const db = await getStaticDB();
+        const lead = db.leads.find(l => l.id === id || l.id == id);
+        if (lead) lead.status = newStatus;
+        persistStaticDB();
+        refreshDashboard();
+        return;
+    }
     try {
         const response = await fetch(`${API_BASE}/leads/status`, {
             method: 'POST',
@@ -546,6 +665,14 @@ window.updateLeadStatus = async (id, newStatus) => {
 };
 
 window.deleteLead = async (id) => {
+    if (isStaticMode()) {
+        if (!confirm('Are you sure you want to delete this inquiry? (Static Mode)')) return;
+        const db = await getStaticDB();
+        db.leads = db.leads.filter(l => l.id !== id && l.id != id);
+        persistStaticDB();
+        refreshDashboard();
+        return;
+    }
     if (!confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')) return;
 
     try {
@@ -966,31 +1093,46 @@ window.filterWarranties = function (status) {
     renderWarranties(filtered);
 };
 
-window.updateWarrantyStatus = async (id, status) => {
-    if (!confirm(`Mark this application as ${status}?`)) return;
+window.updateWarrantyStatus = async (id, newStatus) => {
+    if (isStaticMode()) {
+        const db = await getStaticDB();
+        const item = db.warranties.find(w => w.id === id || w.id == id);
+        if (item) item.status = newStatus;
+        persistStaticDB();
+        refreshDashboard();
+        return;
+    }
     try {
-        const response = await fetch(`${API_BASE}/warranties/${id}`, {
-            method: 'PUT',
+        const response = await fetch(`${API_BASE}/warranties/status`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
             },
-            body: JSON.stringify({ status })
+            body: JSON.stringify({ id, status: newStatus })
         });
         await handleResponse(response);
+
         if (response.ok) {
-            alert(`Application ${status}!`);
-            loadWarranties();
-        } else {
-            throw new Error('Failed to update');
+            showNotification('Status updated successfully!', 'success');
+            refreshDashboard();
         }
-    } catch (e) {
-        alert('Error: ' + e.message);
+    } catch (error) {
+        showNotification('Error updating status: ' + error.message, 'error');
     }
-};
+}
 
 window.deleteWarranty = async (id) => {
-    if (!confirm('Permanently delete this application?')) return;
+    if (isStaticMode()) {
+        if (!confirm('Are you sure you want to delete this warranty request? (Static Mode)')) return;
+        const db = await getStaticDB();
+        db.warranties = db.warranties.filter(w => w.id !== id && w.id != id);
+        persistStaticDB();
+        refreshDashboard();
+        return;
+    }
+    if (!confirm('Delete this warranty request?')) return;
+
     try {
         const response = await fetch(`${API_BASE}/warranties/${id}`, {
             method: 'DELETE',
@@ -998,13 +1140,13 @@ window.deleteWarranty = async (id) => {
         });
         await handleResponse(response);
         if (response.ok) {
-            alert('Application deleted.');
-            loadWarranties();
+            showNotification('Request deleted!', 'success');
+            refreshDashboard();
         }
-    } catch (e) {
-        alert('Error: ' + e.message);
+    } catch (er) {
+        showNotification('Error: ' + er.message, 'error');
     }
-};
+}
 
 // INITIAL LOAD
 loadCategories();
