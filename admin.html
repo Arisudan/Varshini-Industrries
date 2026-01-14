@@ -132,7 +132,7 @@
                         Add Category</button>
                 </div>
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table class="data-table responsive">
                         <thead>
                             <tr>
                                 <th>Category Name</th>
@@ -159,36 +159,32 @@
                 </div>
 
                 <!-- Filter and Search Controls -->
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <!-- Filter and Search Controls -->
+                <div class="flex-group">
                     <!-- Filter Buttons -->
-                    <div style="display: flex; gap: 8px;">
-                        <button class="filter-btn active" data-status="all" onclick="filterLeads('all')"
-                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: #00B4D8; color: white; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="filter-btn active" data-status="all" onclick="filterLeads('all')">
                             All Leads
                         </button>
-                        <button class="filter-btn" data-status="New Lead" onclick="filterLeads('New Lead')"
-                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                        <button class="filter-btn" data-status="New Lead" onclick="filterLeads('New Lead')">
                             New
                         </button>
-                        <button class="filter-btn" data-status="Contacted" onclick="filterLeads('Contacted')"
-                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                        <button class="filter-btn" data-status="Contacted" onclick="filterLeads('Contacted')">
                             Contacted
                         </button>
-                        <button class="filter-btn" data-status="Sold" onclick="filterLeads('Sold')"
-                            style="padding: 8px 16px; border: 1px solid #00B4D8; background: white; color: #00B4D8; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.3s;">
+                        <button class="filter-btn" data-status="Sold" onclick="filterLeads('Sold')">
                             Sold
                         </button>
                     </div>
 
                     <!-- Search Box -->
-                    <div style="flex: 1; min-width: 250px; max-width: 400px;">
+                    <div class="input-container">
                         <input type="text" placeholder="🔍 Search leads by name, email, or phone..."
-                            oninput="searchLeads(this.value)"
-                            style="width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.9rem;">
+                            oninput="searchLeads(this.value)" class="input-field">
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="data-table plain">
+                    <table class="data-table plain responsive">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -219,7 +215,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="data-table">
+                    <table class="data-table responsive">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -248,85 +244,72 @@
                 </div>
 
                 <!-- General Settings -->
-                <div style="margin-bottom: 40px;">
-                    <h4
-                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #FFD166; padding-bottom: 10px;">
-                        General Settings</h4>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Site Name</label>
-                        <input type="text" id="siteName" value="Varshini Industries"
-                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
+                <div class="settings-group">
+                    <h4 class="yellow">General Settings</h4>
+                    <div class="form-group">
+                        <label>Site Name</label>
+                        <input type="text" id="siteName" value="Varshini Industries" class="input-field">
                     </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Admin Email</label>
-                        <input type="email" id="adminEmail" value="info@varshiniindustrries.com"
-                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>Admin Email</label>
+                        <input type="email" id="adminEmail" value="info@varshiniindustrries.com" class="input-field">
                     </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Contact Phone</label>
-                        <input type="text" id="contactPhone" value="+91-8047838824"
-                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>Contact Phone</label>
+                        <input type="text" id="contactPhone" value="+91-8047838824" class="input-field">
                     </div>
                 </div>
 
                 <!-- SEO Settings -->
-                <div style="margin-bottom: 40px;">
-                    <h4
-                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #00B4D8; padding-bottom: 10px;">
-                        <i class="fa-solid fa-chart-line"></i> SEO Management
-                    </h4>
+                <div class="settings-group">
+                    <h4><i class="fa-solid fa-chart-line"></i> SEO Management</h4>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Meta Title (Home Page)</label>
+                    <div class="form-group">
+                        <label>Meta Title (Home Page)</label>
                         <input type="text" id="seoTitle" value="Varshini Industries | Industrial Pumping Solutions"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                            class="input-field" style="max-width: 600px;">
                         <small style="color: #666; display: block; margin-top: 5px;">Recommended: 50-60
                             characters</small>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Meta Description</label>
-                        <textarea id="seoDescription" rows="3"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
+                    <div class="form-group">
+                        <label>Meta Description</label>
+                        <textarea id="seoDescription" rows="3" class="input-field"
+                            style="max-width: 600px;">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">Recommended: 150-160
                             characters</small>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Keywords
-                            (comma-separated)</label>
+                    <div class="form-group">
+                        <label>Keywords (comma-separated)</label>
                         <input type="text" id="seoKeywords"
                             value="industrial pumps, monoblock pumps, submersible pumps, water pumps, centrifugal pumps"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                            class="input-field" style="max-width: 600px;">
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Open Graph Image URL</label>
-                        <input type="text" id="ogImage" value="Logo.jpeg"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>Open Graph Image URL</label>
+                        <input type="text" id="ogImage" value="Logo.jpeg" class="input-field" style="max-width: 600px;">
                         <small style="color: #666; display: block; margin-top: 5px;">Used for social media sharing
                             previews</small>
                     </div>
                 </div>
 
                 <!-- Analytics -->
-                <div style="margin-bottom: 40px;">
-                    <h4
-                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #FFD166; padding-bottom: 10px;">
-                        <i class="fa-solid fa-chart-bar"></i> Analytics & Tracking
-                    </h4>
+                <div class="settings-group">
+                    <h4 class="yellow"><i class="fa-solid fa-chart-bar"></i> Analytics & Tracking</h4>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Google Analytics ID</label>
-                        <input type="text" id="gaId" placeholder="G-XXXXXXXXXX"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>Google Analytics ID</label>
+                        <input type="text" id="gaId" placeholder="G-XXXXXXXXXX" class="input-field"
+                            style="max-width: 600px;">
                         <small style="color: #666; display: block; margin-top: 5px;">Example: G-ABC123DEF456</small>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display:block; margin-bottom:5px; font-weight:600;">Facebook Pixel ID</label>
-                        <input type="text" id="fbPixel" placeholder="Optional"
-                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="form-group">
+                        <label>Facebook Pixel ID</label>
+                        <input type="text" id="fbPixel" placeholder="Optional" class="input-field"
+                            style="max-width: 600px;">
                     </div>
                 </div>
 

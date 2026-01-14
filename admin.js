@@ -267,13 +267,13 @@ function renderProducts(products) {
 
             return `
             <tr>
-                <td><img src="${p.image || 'assets/placeholder.png'}" alt="${p.name}" class="thumb" 
+                <td data-label="Image"><img src="${p.image || 'assets/placeholder.png'}" alt="${p.name}" class="thumb" 
                      onerror="this.src='https://via.placeholder.com/50?text=No+Image'" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                <td><strong>${p.name}</strong><br><small style="color: #666;">${p.series || 'N/A'}</small></td>
-                <td>${p.hp || 'N/A'}</td>
-                <td style="font-weight: 600;">${p.price || 'N/A'}</td>
-                <td><span class="status ${stockClass}">${p.stock || 'Unknown'}</span></td>
-                <td>
+                <td data-label="Model"><strong>${p.name}</strong><br><small style="color: #666;">${p.series || 'N/A'}</small></td>
+                <td data-label="HP/Spec">${p.hp || 'N/A'}</td>
+                <td data-label="Price" style="font-weight: 600;">${p.price || 'N/A'}</td>
+                <td data-label="Stock"><span class="status ${stockClass}">${p.stock || 'Unknown'}</span></td>
+                <td data-label="Actions">
                     <button class="action-btn edit" onclick="editProduct(${p.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
                     <button class="action-btn delete" onclick="deleteProduct(${p.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                 </td>
@@ -324,17 +324,17 @@ function renderLeads(leads) {
 
         return `
         <tr>
-            <td>${l.date || 'N/A'}</td>
-            <td>${l.client || 'Unknown'}</td>
-            <td>${l.interest || 'General Inquiry'}</td>
-            <td>
+            <td data-label="Date">${l.date || 'N/A'}</td>
+            <td data-label="Client">${l.client || 'Unknown'}</td>
+            <td data-label="Interest">${l.interest || 'General Inquiry'}</td>
+            <td data-label="Status">
                 <select class="status-select ${statusClass}" onchange="updateLeadStatus('${l.id}', this.value)">
                     <option value="New Lead" ${l.status === 'New Lead' ? 'selected' : ''}>New Lead</option>
                     <option value="Contacted" ${l.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
                     <option value="Sold" ${l.status === 'Sold' ? 'selected' : ''}>Sold</option>
                 </select>
             </td>
-            <td>
+            <td data-label="Actions">
                 <button class="action-btn delete" onclick="deleteLead('${l.id}')" title="Delete Inquiry">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -798,9 +798,9 @@ function renderCategories(categories) {
 
     tbody.innerHTML = categories.map(c => `
         <tr>
-            <td>${c.name}</td>
-            <td>${c.count || 0} Products</td>
-            <td>
+            <td data-label="Name">${c.name}</td>
+            <td data-label="Count">${c.count || 0} Products</td>
+            <td data-label="Actions">
                 <button class="action-btn delete" onclick="deleteCategory(${c.id})" title="Delete Category">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -931,23 +931,23 @@ function renderWarranties(warranties) {
 
         return `
         <tr>
-            <td>${date}</td>
-            <td>
+            <td data-label="Date">${date}</td>
+            <td data-label="Customer">
                 <strong>${d.name || 'Unknown'}</strong><br>
                 <small style="color:#666">${d.city || ''}</small>
             </td>
-            <td>
+            <td data-label="Contact">
                 <i class="fa-solid fa-phone"></i> ${d.phone}<br>
                 <a href="mailto:${d.email}" style="color:#00B4D8;">${d.email || ''}</a>
             </td>
-            <td>${d.product ? '<strong>' + d.product + '</strong><br>' : ''}${d.address || d.message || 'N/A'}</td>
-            <td>
+            <td data-label="Address">${d.product ? '<strong>' + d.product + '</strong><br>' : ''}${d.address || d.message || 'N/A'}</td>
+            <td data-label="Status">
                 <span style="background: ${color}; color: ${textCol}; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
                     ${d.status}
                 </span>
             </td>
-            <td>
-                 <div style="display: flex; gap: 5px;">
+            <td data-label="Actions">
+                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                     ${d.status !== 'Approved' ? `<button class="action-btn" onclick="updateWarrantyStatus(${d.id}, 'Approved')" title="Approve" style="background:#28a745; color:white;"><i class="fa-solid fa-check"></i></button>` : ''}
                     ${d.status !== 'Rejected' ? `<button class="action-btn" onclick="updateWarrantyStatus(${d.id}, 'Rejected')" title="Reject" style="background:#dc3545; color:white;"><i class="fa-solid fa-ban"></i></button>` : ''}
                     <button class="action-btn delete" onclick="deleteWarranty(${d.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
