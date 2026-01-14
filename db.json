@@ -490,17 +490,5 @@
             "status": "Pending"
         }
     ],
-    "warranties": [
-        {
-            "name": "Asterhere",
-            "phone": "9442685359",
-            "email": "24mu01@psgtech.ac.in",
-            "city": "salem",
-            "product": "motor",
-            "address": "nothing",
-            "id": 1768416447545,
-            "date": "2026-01-14T18:47:27.545Z",
-            "status": "Pending"
-        }
-    ]
+    "warranties": []
 }

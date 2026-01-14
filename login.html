@@ -168,33 +168,44 @@
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
             const btn = document.querySelector('.btn-login');
 
             // Visual Feedback
+            btn.disabled = true;
             btn.innerText = 'AUTHENTICATING...';
             errorMsg.style.display = 'none';
 
-            // Simulate Network Delay for realism
-            setTimeout(() => {
-                if (u === 'admin' && p === 'admin123') {
-                    // Success: Set LocalStorage Token (GitHub Pages Mode)
-                    localStorage.setItem('auth_token', 'demo_valid_token');
-                    localStorage.setItem('user_name', 'Admin');
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
 
-                    // Redirect
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Success: Store JWT Token and User Info
+                    localStorage.setItem('auth_token', data.token);
+                    localStorage.setItem('user_name', data.user.name);
+
+                    // Redirect to Admin Panel
                     window.location.href = 'admin.html';
                 } else {
                     // Failure
-                    errorMsg.innerText = "Invalid Credentials. Try 'admin' / 'admin123'";
-                    errorMsg.style.display = 'block';
-                    btn.innerText = 'SECURE ACCESS';
+                    throw new Error(data.message || 'Invalid Credentials');
                 }
-            }, 800);
+            } catch (error) {
+                errorMsg.innerText = error.message;
+                errorMsg.style.display = 'block';
+                btn.innerText = 'SECURE ACCESS';
+                btn.disabled = false;
+            }
         });
 
         // Background Animation Script (Optimized)

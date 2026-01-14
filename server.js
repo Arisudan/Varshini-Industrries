@@ -5,9 +5,12 @@ const fs = require('fs');
 const path = require('path');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 3000;
+const JWT_SECRET = 'your-secret-key-2026'; // In production, use process.env.JWT_SECRET
 const DB_FILE = path.join(__dirname, 'db.json');
 const multer = require('multer');
 
@@ -41,12 +44,24 @@ app.use(session({
     cookie: { secure: false, maxAge: 3600000 } // 1 Hour session, set secure: true for HTTPS
 }));
 
-// Middleware: Check Auth
+// Middleware: Check Auth (Session or Token)
 const isAuthenticated = (req, res, next) => {
-    if (req.session && req.session.user) {
+    // Check for JWT token in Authorization header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+        jwt.verify(token, JWT_SECRET, (err, user) => {
+            if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+            req.user = user;
+            return next();
+        });
+    } else if (req.session && req.session.user) {
+        // Fallback to session
         return next();
+    } else {
+        return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
     }
-    return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
 };
 
 // Helper to read DB
@@ -65,18 +80,28 @@ const writeDb = (data) => {
 };
 
 // --- AUTH API ---
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     const db = readDb();
 
-    // Simple Hash Check (Ideally use bcrypt in production)
-    const user = db.users.find(u => u.username === username && u.password === password);
+    const user = db.users.find(u => u.username === username);
 
-    if (user) {
-        req.session.user = { name: user.name, role: user.role }; // Create Session
-        res.json({ success: true, user: { name: user.name, role: user.role } });
+    if (user && bcrypt.compareSync(password, user.password)) {
+        // Create JWT
+        const token = jwt.sign(
+            { username: user.username, role: user.role, name: user.name },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        req.session.user = { name: user.name, role: user.role }; // Support sessions too
+        res.json({
+            success: true,
+            token: token,
+            user: { name: user.name, role: user.role }
+        });
     } else {
-        res.status(401).json({ success: false, message: 'Invalid Credentials' });
+        res.status(401).json({ success: false, message: 'Invalid Username or Password' });
     }
 });
 
@@ -121,7 +146,7 @@ app.post('/api/leads', (req, res) => {
 });
 
 // --- PROTECTED DASHBOARD APIs (No server-side auth check, using client localStorage) ---
-app.get('/api/dashboard', (req, res) => {
+app.get('/api/dashboard', isAuthenticated, (req, res) => {
     const db = readDb();
 
     // Calculate real-time stats from actual data
@@ -139,7 +164,7 @@ app.get('/api/dashboard', (req, res) => {
     });
 });
 
-app.post('/api/products', upload.single('image'), (req, res) => {
+app.post('/api/products', isAuthenticated, upload.single('image'), (req, res) => {
     const db = readDb();
     const newProduct = req.body;
 
@@ -167,7 +192,7 @@ app.post('/api/products', upload.single('image'), (req, res) => {
     res.json({ success: true, product: newProduct });
 });
 
-app.put('/api/products/:id', upload.single('image'), (req, res) => {
+app.put('/api/products/:id', isAuthenticated, upload.single('image'), (req, res) => {
     const id = parseInt(req.params.id);
     const updatedData = req.body;
     const db = readDb();
@@ -198,7 +223,7 @@ app.put('/api/products/:id', upload.single('image'), (req, res) => {
     }
 });
 
-app.delete('/api/products/:id', (req, res) => {
+app.delete('/api/products/:id', isAuthenticated, (req, res) => {
     const id = parseInt(req.params.id);
     const db = readDb();
     const initialLength = db.products.length;
@@ -229,7 +254,7 @@ app.get('/api/categories', (req, res) => {
     res.json(categoriesWithCounts);
 });
 
-app.post('/api/categories', (req, res) => {
+app.post('/api/categories', isAuthenticated, (req, res) => {
     const { name } = req.body;
     const db = readDb();
     if (!db.categories) db.categories = [];
@@ -243,7 +268,7 @@ app.post('/api/categories', (req, res) => {
     res.json({ success: true });
 });
 
-app.delete('/api/categories/:id', (req, res) => {
+app.delete('/api/categories/:id', isAuthenticated, (req, res) => {
     const id = parseInt(req.params.id);
     const db = readDb();
 
@@ -266,7 +291,7 @@ app.delete('/api/categories/:id', (req, res) => {
 
 // --- WARRANTY REGISTRATION APIs ---
 
-app.get('/api/warranties', (req, res) => {
+app.get('/api/warranties', isAuthenticated, (req, res) => {
     const db = readDb();
     if (!db.warranties) db.warranties = [];
     res.json(db.warranties);
@@ -293,7 +318,7 @@ app.post('/api/warranties', (req, res) => {
     res.json({ success: true, message: 'Registration submitted successfully' });
 });
 
-app.put('/api/warranties/:id', (req, res) => {
+app.put('/api/warranties/:id', isAuthenticated, (req, res) => {
     const id = parseInt(req.params.id);
     const { status } = req.body;
     const db = readDb();
@@ -310,7 +335,7 @@ app.put('/api/warranties/:id', (req, res) => {
     }
 });
 
-app.delete('/api/warranties/:id', (req, res) => {
+app.delete('/api/warranties/:id', isAuthenticated, (req, res) => {
     const id = parseInt(req.params.id);
     const db = readDb();
 

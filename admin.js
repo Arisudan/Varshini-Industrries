@@ -3,8 +3,23 @@
 
 const API_BASE = 'http://localhost:3000/api';
 
-document.addEventListener('DOMContentLoaded', () => {
+// Helper to get Auth Headers
+function getAuthHeader() {
+    const token = localStorage.getItem('auth_token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
 
+// Global Response Handler for Auth Errors
+async function handleResponse(response) {
+    if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem('auth_token');
+        window.location.href = 'login.html';
+        return null;
+    }
+    return response;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     // Security Check
     if (!localStorage.getItem('auth_token')) {
         window.location.href = 'login.html';
@@ -111,24 +126,28 @@ function setupViewSwitching() {
 
 async function refreshDashboard() {
     try {
-        // Use the /dashboard endpoint that returns everything
-        const response = await fetch(`${API_BASE}/dashboard`);
+        const token = localStorage.getItem('auth_token');
+        const response = await fetch(`${API_BASE}/dashboard`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            window.location.href = 'login.html';
+            return;
+        }
 
         if (!response.ok) {
             throw new Error('Server returned ' + response.status);
         }
 
         const data = await response.json();
-
         renderStats(data.stats);
         renderProducts(data.products);
         renderLeads(data.leads);
 
-        // Initialize charts after data is loaded
         if (typeof initializeCharts === 'function') {
             setTimeout(() => initializeCharts(), 100);
         }
-
     } catch (error) {
         console.error('Error fetching data:', error);
         showError('Unable to connect to database. Please ensure the server is running on port 3000.');
@@ -405,8 +424,10 @@ window.openAddProductModal = () => {
 
 window.editProduct = async (id) => {
     try {
-        // Fetch all products and find the one with matching ID
-        const response = await fetch(`${API_BASE}/dashboard`);
+        const response = await fetch(`${API_BASE}/dashboard`, {
+            headers: getAuthHeader()
+        });
+        await handleResponse(response);
         const data = await response.json();
         const product = data.products.find(p => p.id === id);
 
@@ -450,29 +471,25 @@ async function saveProduct(formData) {
 
     try {
         if (id) {
-            // Update existing product
             const response = await fetch(`${API_BASE}/products/${id}`, {
                 method: 'PUT',
-                body: formData // Send FormData directly for Multer
+                headers: getAuthHeader(),
+                body: formData
             });
-
+            await handleResponse(response);
             if (response.ok) {
                 alert('✅ Product updated successfully!');
-            } else {
-                throw new Error('Server error');
-            }
+            } else { throw new Error('Server error'); }
         } else {
-            // Add new product
             const response = await fetch(`${API_BASE}/products`, {
                 method: 'POST',
-                body: formData // Send FormData directly for Multer
+                headers: getAuthHeader(),
+                body: formData
             });
-
+            await handleResponse(response);
             if (response.ok) {
                 alert('✅ Product added successfully!');
-            } else {
-                throw new Error('Server error');
-            }
+            } else { throw new Error('Server error'); }
         }
 
         closeModal();
@@ -487,8 +504,10 @@ window.deleteProduct = async (id) => {
 
     try {
         const response = await fetch(`${API_BASE}/products/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeader()
         });
+        await handleResponse(response);
 
         if (response.ok) {
             alert('✅ Product deleted successfully!');
@@ -505,9 +524,13 @@ window.updateLeadStatus = async (id, newStatus) => {
     try {
         const response = await fetch(`${API_BASE}/leads/status`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
             body: JSON.stringify({ id, status: newStatus })
         });
+        await handleResponse(response);
 
         if (response.ok) {
             // Visual feedback
@@ -527,8 +550,10 @@ window.deleteLead = async (id) => {
 
     try {
         const response = await fetch(`${API_BASE}/leads/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeader()
         });
+        await handleResponse(response);
 
         if (response.ok) {
             showNotification('✅ Inquiry deleted successfully!', 'success');
@@ -580,7 +605,8 @@ window.resetSettings = function () {
 // --- CSV EXPORT FUNCTIONALITY ---
 
 window.exportLeadsToCSV = function () {
-    fetch(`${API_BASE}/dashboard`)
+    fetch(`${API_BASE}/dashboard`, { headers: getAuthHeader() })
+        .then(res => handleResponse(res))
         .then(res => res.json())
         .then(data => {
             const leads = data.leads || [];
@@ -621,7 +647,8 @@ window.exportLeadsToCSV = function () {
 };
 
 window.exportProductsToCSV = function () {
-    fetch(`${API_BASE}/dashboard`)
+    fetch(`${API_BASE}/dashboard`, { headers: getAuthHeader() })
+        .then(res => handleResponse(res))
         .then(res => res.json())
         .then(data => {
             const products = data.products || [];
@@ -748,7 +775,10 @@ window.searchLeads = function (query) {
 
 async function loadCategories() {
     try {
-        const response = await fetch(`${API_BASE}/categories`);
+        const response = await fetch(`${API_BASE}/categories`, {
+            headers: getAuthHeader()
+        });
+        await handleResponse(response);
         const categories = await response.json();
         renderCategories(categories);
         populateCategoryDropdown(categories);
@@ -819,10 +849,13 @@ if (addCategoryForm) {
         try {
             const response = await fetch(`${API_BASE}/categories`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                },
                 body: JSON.stringify({ name })
             });
-
+            await handleResponse(response);
             const data = await response.json();
 
             if (response.ok) {
@@ -843,9 +876,10 @@ window.deleteCategory = async (id) => {
 
     try {
         const response = await fetch(`${API_BASE}/categories/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeader()
         });
-
+        await handleResponse(response);
         const data = await response.json();
 
         if (response.ok) {
@@ -864,7 +898,10 @@ window.deleteCategory = async (id) => {
 
 async function loadWarranties() {
     try {
-        const response = await fetch(`${API_BASE}/warranties`);
+        const response = await fetch(`${API_BASE}/warranties`, {
+            headers: getAuthHeader()
+        });
+        await handleResponse(response);
         const warranties = await response.json();
         renderWarranties(warranties);
     } catch (error) {
@@ -934,9 +971,13 @@ window.updateWarrantyStatus = async (id, status) => {
     try {
         const response = await fetch(`${API_BASE}/warranties/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
             body: JSON.stringify({ status })
         });
+        await handleResponse(response);
         if (response.ok) {
             alert(`Application ${status}!`);
             loadWarranties();
@@ -952,8 +993,10 @@ window.deleteWarranty = async (id) => {
     if (!confirm('Permanently delete this application?')) return;
     try {
         const response = await fetch(`${API_BASE}/warranties/${id}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: getAuthHeader()
         });
+        await handleResponse(response);
         if (response.ok) {
             alert('Application deleted.');
             loadWarranties();
