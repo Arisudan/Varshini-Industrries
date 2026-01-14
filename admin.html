@@ -26,9 +26,8 @@
             </li>
             <li data-view="products"><a href="#"><i class="fa-solid fa-box-open"></i> Product Catalog</a></li>
             <li data-view="dealers">
-                <a href="#" class="flex-bw">
-                    <span><i class="fa-solid fa-users-gear"></i> Dealer Requests</span>
-                    <span class="badge">3 New</span>
+                <a href="#">
+                    <i class="fa-solid fa-users-gear"></i> Dealer Requests
                 </a>
             </li>
             <li data-view="leads"><a href="#"><i class="fa-solid fa-envelope-open-text"></i> Inquiries/Leads</a></li>
@@ -79,6 +78,7 @@
                             <tr>
                                 <th>Image</th>
                                 <th>Model Name</th>
+                                <th>Category</th>
                                 <th>HP / Spec</th>
                                 <th>Price (INR)</th>
                                 <th>Stock Status</th>
@@ -131,25 +131,102 @@
             </section>
         </div>
 
-        <!-- VIEW: SETTINGS (Placeholder) -->
+        <!-- VIEW: SETTINGS -->
         <div id="view-settings" class="admin-view" style="display: none;">
             <section class="panel-section">
                 <div class="panel-header">
                     <h3>System Settings</h3>
                 </div>
-                <form onsubmit="event.preventDefault(); alert('Settings Saved!');">
+
+                <!-- General Settings -->
+                <div style="margin-bottom: 40px;">
+                    <h4
+                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #FFD166; padding-bottom: 10px;">
+                        General Settings</h4>
                     <div style="margin-bottom: 20px;">
                         <label style="display:block; margin-bottom:5px; font-weight:600;">Site Name</label>
-                        <input type="text" value="Varshini Industries"
-                            style="padding: 10px; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="text" id="siteName" value="Varshini Industries"
+                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display:block; margin-bottom:5px; font-weight:600;">Admin Email</label>
-                        <input type="email" value="admin@varshini-ind.com"
-                            style="padding: 10px; width: 100%; max-width: 400px; border: 1px solid #ddd; border-radius: 4px;">
+                        <input type="email" id="adminEmail" value="info@varshiniindustrries.com"
+                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
                     </div>
-                    <button class="btn btn-primary">Save Changes</button>
-                </form>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Contact Phone</label>
+                        <input type="text" id="contactPhone" value="+91-8047838824"
+                            style="padding: 10px; width: 100%; max-width: 500px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <!-- SEO Settings -->
+                <div style="margin-bottom: 40px;">
+                    <h4
+                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #00B4D8; padding-bottom: 10px;">
+                        <i class="fa-solid fa-chart-line"></i> SEO Management
+                    </h4>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Meta Title (Home Page)</label>
+                        <input type="text" id="seoTitle" value="Varshini Industries | Industrial Pumping Solutions"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                        <small style="color: #666; display: block; margin-top: 5px;">Recommended: 50-60
+                            characters</small>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Meta Description</label>
+                        <textarea id="seoDescription" rows="3"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
+                        <small style="color: #666; display: block; margin-top: 5px;">Recommended: 150-160
+                            characters</small>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Keywords
+                            (comma-separated)</label>
+                        <input type="text" id="seoKeywords"
+                            value="industrial pumps, monoblock pumps, submersible pumps, water pumps, centrifugal pumps"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Open Graph Image URL</label>
+                        <input type="text" id="ogImage" value="Logo.jpeg"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                        <small style="color: #666; display: block; margin-top: 5px;">Used for social media sharing
+                            previews</small>
+                    </div>
+                </div>
+
+                <!-- Analytics -->
+                <div style="margin-bottom: 40px;">
+                    <h4
+                        style="margin-bottom: 20px; color: #0A2540; border-bottom: 2px solid #FFD166; padding-bottom: 10px;">
+                        <i class="fa-solid fa-chart-bar"></i> Analytics & Tracking
+                    </h4>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Google Analytics ID</label>
+                        <input type="text" id="gaId" placeholder="G-XXXXXXXXXX"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                        <small style="color: #666; display: block; margin-top: 5px;">Example: G-ABC123DEF456</small>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block; margin-bottom:5px; font-weight:600;">Facebook Pixel ID</label>
+                        <input type="text" id="fbPixel" placeholder="Optional"
+                            style="padding: 10px; width: 100%; max-width: 600px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="saveSettings()" style="margin-top: 20px;">
+                    <i class="fa-solid fa-save"></i> Save All Settings
+                </button>
+                <button class="btn btn-outline" onclick="resetSettings()" style="margin-left: 10px;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset to Defaults
+                </button>
             </section>
         </div>
 
