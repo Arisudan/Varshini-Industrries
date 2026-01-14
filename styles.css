@@ -4389,3 +4389,25 @@ img {
 .mobile-bottom-nav {
     z-index: 1000;
 }
+
+/* Register Button Highlight */
+.btn-highlight {
+    background-color: var(--action-yellow);
+    color: var(--primary-navy);
+    border-radius: 4px;
+    box-shadow: 0 0 15px rgba(255, 209, 102, 0.6);
+    padding: 10px 25px;
+    transition: all 0.3s ease;
+    text-decoration: none !important;
+    /* Ensure no underline */
+    animation: none;
+    /* Disable pulse to prevent shadow conflict */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-highlight:hover {
+    box-shadow: 0 8px 25px rgba(255, 209, 102, 0.9);
+    transform: translateY(-3px);
+}

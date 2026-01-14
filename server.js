@@ -264,68 +264,66 @@ app.delete('/api/categories/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// --- DEALER MANAGEMENT APIs ---
+// --- WARRANTY REGISTRATION APIs ---
 
-app.get('/api/dealers', (req, res) => {
+app.get('/api/warranties', (req, res) => {
     const db = readDb();
-    if (!db.dealers) db.dealers = [];
-    res.json(db.dealers);
+    if (!db.warranties) db.warranties = [];
+    res.json(db.warranties);
 });
 
-app.post('/api/dealers', (req, res) => {
-    const application = req.body;
+app.post('/api/warranties', (req, res) => {
+    const registration = req.body;
     const db = readDb();
-    if (!db.dealers) db.dealers = [];
+    if (!db.warranties) db.warranties = [];
 
     // Validate required fields
-    if (!application.name || !application.phone || !application.city) {
+    if (!registration.name || !registration.email) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
     // Add ID and Timestamp and default status
-    application.id = Date.now();
-    application.date = new Date().toISOString();
-    application.status = 'Pending'; // Pending, Approved, Rejected
+    registration.id = Date.now();
+    registration.date = new Date().toISOString();
+    registration.status = 'Pending';
 
-    db.dealers.unshift(application);
-
-    // Update real stats count if needed, but we calculate real-time now
+    db.warranties.unshift(registration);
 
     writeDb(db);
-    res.json({ success: true, message: 'Application submitted successfully' });
+    res.json({ success: true, message: 'Registration submitted successfully' });
 });
 
-app.put('/api/dealers/:id', (req, res) => {
+app.put('/api/warranties/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const { status } = req.body;
     const db = readDb();
 
-    if (!db.dealers) return res.status(404).json({ success: false });
+    if (!db.warranties) return res.status(404).json({ success: false });
 
-    const dealer = db.dealers.find(d => d.id === id);
-    if (dealer) {
-        dealer.status = status;
+    const item = db.warranties.find(d => d.id === id);
+    if (item) {
+        item.status = status;
         writeDb(db);
         res.json({ success: true });
     } else {
-        res.status(404).json({ success: false, message: 'Application not found' });
+        res.status(404).json({ success: false, message: 'Registration not found' });
     }
 });
 
-app.delete('/api/dealers/:id', (req, res) => {
+app.delete('/api/warranties/:id', (req, res) => {
     const id = parseInt(req.params.id);
     const db = readDb();
 
-    if (!db.dealers) return res.status(404).json({ success: false });
+    if (!db.warranties) return res.status(404).json({ success: false });
 
-    const initialLength = db.dealers.length;
-    db.dealers = db.dealers.filter(d => d.id !== id);
+    const initialLength = db.warranties.length;
+    db.warranties = db.warranties.filter(d => d.id !== id);
 
-    if (db.dealers.length < initialLength) {
+    if (db.warranties.length < initialLength) {
         writeDb(db);
         res.json({ success: true });
     } else {
-        res.status(404).json({ success: false, message: 'Application not found' });
+        res.status(404).json({ success: false, message: 'Registration not found' });
     }
 });
 

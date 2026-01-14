@@ -860,34 +860,34 @@ window.deleteCategory = async (id) => {
 };
 
 // Load categories on start
-// --- DEALER MANAGEMENT ---
+// --- WARRANTY REQUESTS ---
 
-async function loadDealers() {
+async function loadWarranties() {
     try {
-        const response = await fetch(`${API_BASE}/dealers`);
-        const dealers = await response.json();
-        renderDealers(dealers);
+        const response = await fetch(`${API_BASE}/warranties`);
+        const warranties = await response.json();
+        renderWarranties(warranties);
     } catch (error) {
-        console.error('Error loading dealers:', error);
+        console.error('Error loading warranties:', error);
     }
 }
 
-function renderDealers(dealers) {
-    const tbody = document.getElementById('dealersTableBody');
+function renderWarranties(warranties) {
+    const tbody = document.getElementById('warrantiesTableBody');
     if (!tbody) return;
 
-    if (Array.isArray(dealers) && dealers.length > 0) {
-        window.allDealers = dealers; // Update cache
-    } else if (!window.allDealers || window.allDealers.length === 0) {
-        window.allDealers = [];
+    if (Array.isArray(warranties) && warranties.length > 0) {
+        window.allWarranties = warranties;
+    } else if (!window.allWarranties || window.allWarranties.length === 0) {
+        window.allWarranties = [];
     }
 
-    if (!dealers || dealers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No applications found.</td></tr>';
+    if (!warranties || warranties.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No warranty requests found.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = dealers.map(d => {
+    tbody.innerHTML = warranties.map(d => {
         const date = d.date ? new Date(d.date).toLocaleDateString() : 'N/A';
         const color = d.status === 'Approved' ? '#28a745' : d.status === 'Rejected' ? '#dc3545' : '#ffc107';
         const textCol = d.status === 'Pending' ? '#000' : '#fff';
@@ -897,13 +897,13 @@ function renderDealers(dealers) {
             <td>${date}</td>
             <td>
                 <strong>${d.name || 'Unknown'}</strong><br>
-                <small style="color:#666">${d.businessName || ''}</small>
+                <small style="color:#666">${d.city || ''}</small>
             </td>
             <td>
                 <i class="fa-solid fa-phone"></i> ${d.phone}<br>
                 <a href="mailto:${d.email}" style="color:#00B4D8;">${d.email || ''}</a>
             </td>
-            <td>${d.city || ''}, ${d.state || ''}</td>
+            <td>${d.product ? '<strong>' + d.product + '</strong><br>' : ''}${d.address || d.message || 'N/A'}</td>
             <td>
                 <span style="background: ${color}; color: ${textCol}; padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">
                     ${d.status}
@@ -911,9 +911,9 @@ function renderDealers(dealers) {
             </td>
             <td>
                  <div style="display: flex; gap: 5px;">
-                    ${d.status !== 'Approved' ? `<button class="action-btn" onclick="updateDealerStatus(${d.id}, 'Approved')" title="Approve" style="background:#28a745; color:white;"><i class="fa-solid fa-check"></i></button>` : ''}
-                    ${d.status !== 'Rejected' ? `<button class="action-btn" onclick="updateDealerStatus(${d.id}, 'Rejected')" title="Reject" style="background:#dc3545; color:white;"><i class="fa-solid fa-ban"></i></button>` : ''}
-                    <button class="action-btn delete" onclick="deleteDealer(${d.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                    ${d.status !== 'Approved' ? `<button class="action-btn" onclick="updateWarrantyStatus(${d.id}, 'Approved')" title="Approve" style="background:#28a745; color:white;"><i class="fa-solid fa-check"></i></button>` : ''}
+                    ${d.status !== 'Rejected' ? `<button class="action-btn" onclick="updateWarrantyStatus(${d.id}, 'Rejected')" title="Reject" style="background:#dc3545; color:white;"><i class="fa-solid fa-ban"></i></button>` : ''}
+                    <button class="action-btn delete" onclick="deleteWarranty(${d.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </td>
         </tr>
@@ -921,25 +921,25 @@ function renderDealers(dealers) {
     }).join('');
 }
 
-window.filterDealers = function (status) {
-    if (!window.allDealers) return;
+window.filterWarranties = function (status) {
+    if (!window.allWarranties) return;
     const filtered = status === 'all'
-        ? window.allDealers
-        : window.allDealers.filter(d => d.status === status);
-    renderDealers(filtered);
+        ? window.allWarranties
+        : window.allWarranties.filter(d => d.status === status);
+    renderWarranties(filtered);
 };
 
-window.updateDealerStatus = async (id, status) => {
+window.updateWarrantyStatus = async (id, status) => {
     if (!confirm(`Mark this application as ${status}?`)) return;
     try {
-        const response = await fetch(`${API_BASE}/dealers/${id}`, {
+        const response = await fetch(`${API_BASE}/warranties/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
         if (response.ok) {
             alert(`Application ${status}!`);
-            loadDealers();
+            loadWarranties();
         } else {
             throw new Error('Failed to update');
         }
@@ -948,15 +948,15 @@ window.updateDealerStatus = async (id, status) => {
     }
 };
 
-window.deleteDealer = async (id) => {
+window.deleteWarranty = async (id) => {
     if (!confirm('Permanently delete this application?')) return;
     try {
-        const response = await fetch(`${API_BASE}/dealers/${id}`, {
+        const response = await fetch(`${API_BASE}/warranties/${id}`, {
             method: 'DELETE'
         });
         if (response.ok) {
             alert('Application deleted.');
-            loadDealers();
+            loadWarranties();
         }
     } catch (e) {
         alert('Error: ' + e.message);
@@ -965,4 +965,4 @@ window.deleteDealer = async (id) => {
 
 // INITIAL LOAD
 loadCategories();
-loadDealers();
+loadWarranties();
