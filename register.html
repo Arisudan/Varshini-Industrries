@@ -147,30 +147,32 @@
                         const formData = new FormData(form);
 
                         const registration = Object.fromEntries(formData.entries());
+                        registration.timestamp = new Date(); // Add timestamp
+                        registration.status = 'Pending'; // Default status
 
                         // Disable button
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
                         try {
-                            const response = await fetch('/api/warranties', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(registration)
-                            });
-
-                            if (response.ok) {
-                                statusDiv.style.display = 'block';
-                                statusDiv.style.color = '#28a745';
-                                statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> <strong>Registration Successful!</strong>';
-                                form.reset();
+                            // Use Firestore if available
+                            if (typeof db !== 'undefined' && db) {
+                                await db.collection('warranties').add(registration);
                             } else {
-                                throw new Error('Server error');
+                                // Fallback (or specific error if critical)
+                                throw new Error('Database connection failed.');
                             }
+
+                            statusDiv.style.display = 'block';
+                            statusDiv.style.color = '#28a745';
+                            statusDiv.innerHTML = '<i class="fa-solid fa-check-circle"></i> <strong>Registration Successful!</strong>';
+                            form.reset();
+
                         } catch (error) {
+                            console.error("Registration Error:", error);
                             statusDiv.style.display = 'block';
                             statusDiv.style.color = '#dc3545';
-                            statusDiv.innerHTML = 'Error submitting. Please try again.';
+                            statusDiv.innerHTML = 'Error submitting. Please try again or contact support.';
                         } finally {
                             submitBtn.disabled = false;
                             if (statusDiv.style.color !== 'rgb(40, 167, 69)') { // if not success

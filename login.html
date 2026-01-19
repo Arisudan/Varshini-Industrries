@@ -167,64 +167,61 @@
         </form>
     </div>
 
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            const email = document.getElementById('username').value; // Treating username as email
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
             const btn = document.querySelector('.btn-login');
 
-            // Visual Feedback
             btn.disabled = true;
             btn.innerText = 'AUTHENTICATING...';
             errorMsg.style.display = 'none';
 
-            // Check if we are on GitHub Pages or local static host
-            const isStaticHost = window.location.hostname.includes('github.io') ||
-                window.location.protocol === 'file:';
-
-            // Helper to handle client-side success
-            const handleLocalSuccess = (user) => {
-                localStorage.setItem('auth_token', 'mock_token_static_mode');
-                localStorage.setItem('user_name', user.name);
-                localStorage.setItem('static_mode', 'true');
-                window.location.href = 'admin.html';
-            };
-
             try {
-                // Try real API first
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                }).catch(err => {
-                    // If fetch fails (e.g. 404 on GitHub Pages), we handle it in the catch
-                    return { ok: false, isNetworkError: true };
-                });
+                // 1. Try Firebase Auth
+                if (typeof auth !== 'undefined') {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    localStorage.setItem('auth_token', data.token);
-                    localStorage.setItem('user_name', data.user.name);
-                    localStorage.setItem('static_mode', 'false');
+                    // Set LocalStorage for Admin Panel compatibility
+                    localStorage.setItem('auth_token', await user.getIdToken());
+                    localStorage.setItem('user_name', user.email);
+                    localStorage.setItem('static_mode', 'false'); // We are live!
+
                     window.location.href = 'admin.html';
-                } else {
-                    // If backend is missing (GitHub Pages), use static fallback
-                    if (isStaticHost || response.isNetworkError) {
-                        console.log("No backend detected. Using Static Mode credentials.");
-                        if (username === 'admin' && password === 'admin123') {
-                            handleLocalSuccess({ name: 'Admin (Demo)' });
-                        } else {
-                            throw new Error('Invalid Credentials (Demo Mode)');
-                        }
-                    } else {
-                        const data = await response.json().catch(() => ({}));
-                        throw new Error(data.message || 'Invalid Credentials');
+                    return;
+                }
+
+                // 2. Legacy/Local Fallback (Only for Localhost)
+                const isLocal = window.location.hostname === 'localhost' || window.location.protocol === 'file:';
+                if (isLocal) {
+                    if (email === 'admin' && password === 'admin123') {
+                        localStorage.setItem('auth_token', 'dev_token');
+                        localStorage.setItem('user_name', 'Local Admin');
+                        localStorage.setItem('static_mode', 'true');
+                        window.location.href = 'admin.html';
+                        return;
                     }
                 }
+
+                throw new Error('Invalid Email/Password or Firebase not connected.');
+
             } catch (error) {
-                errorMsg.innerText = error.message;
+                console.error(error);
+                let msg = "Authentication Failed";
+                if (error.code === 'auth/user-not-found') msg = "No user found with this email.";
+                if (error.code === 'auth/wrong-password') msg = "Incorrect password.";
+                if (error.code === 'auth/invalid-email') msg = "Invalid email format.";
+
+                errorMsg.innerText = msg;
                 errorMsg.style.display = 'block';
                 btn.innerText = 'SECURE ACCESS';
                 btn.disabled = false;
