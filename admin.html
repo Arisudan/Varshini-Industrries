@@ -237,127 +237,139 @@
         </div>
 
         <!-- VIEW: SETTINGS -->
+        <!-- VIEW: SETTINGS -->
         <div id="view-settings" class="admin-view" style="display: none;">
-            <section class="panel-section">
-                <div class="panel-header">
-                    <h3>System Settings</h3>
-                </div>
-
-                <!-- General Settings -->
-                <div class="settings-group">
-                    <h4 class="yellow">General Settings</h4>
-                    <div class="form-group">
-                        <label>Site Name</label>
-                        <input type="text" id="siteName" value="Varshini Industries" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label>Admin Email</label>
-                        <input type="email" id="adminEmail" value="info@varshiniindustrries.com" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label>Contact Phone</label>
-                        <input type="text" id="contactPhone" value="+91-8047838824" class="input-field">
-                    </div>
-                </div>
-
-                <!-- SEO Settings -->
-                <div class="settings-group">
-                    <h4><i class="fa-solid fa-chart-line"></i> SEO Management</h4>
-
-                    <div class="form-group">
-                        <label>Meta Title (Home Page)</label>
-                        <input type="text" id="seoTitle" value="Varshini Industries | Industrial Pumping Solutions"
-                            class="input-field" style="max-width: 600px;">
-                        <small style="color: #666; display: block; margin-top: 5px;">Recommended: 50-60
-                            characters</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Meta Description</label>
-                        <textarea id="seoDescription" rows="3" class="input-field"
-                            style="max-width: 600px;">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
-                        <small style="color: #666; display: block; margin-top: 5px;">Recommended: 150-160
-                            characters</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Keywords (comma-separated)</label>
-                        <input type="text" id="seoKeywords"
-                            value="industrial pumps, monoblock pumps, submersible pumps, water pumps, centrifugal pumps"
-                            class="input-field" style="max-width: 600px;">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Open Graph Image URL</label>
-                        <input type="text" id="ogImage" value="Logo.jpeg" class="input-field" style="max-width: 600px;">
-                        <small style="color: #666; display: block; margin-top: 5px;">Used for social media sharing
-                            previews</small>
-                    </div>
-                </div>
-
-                <!-- Analytics -->
-                <div class="settings-group">
-                    <h4 class="yellow"><i class="fa-solid fa-chart-bar"></i> Analytics & Tracking</h4>
-
-                    <div class="form-group">
-                        <label>Google Analytics ID</label>
-                        <input type="text" id="gaId" placeholder="G-XXXXXXXXXX" class="input-field"
-                            style="max-width: 600px;">
-                        <small style="color: #666; display: block; margin-top: 5px;">Example: G-ABC123DEF456</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Facebook Pixel ID</label>
-                        <input type="text" id="fbPixel" placeholder="Optional" class="input-field"
-                            style="max-width: 600px;">
-                    </div>
-                </div>
-
-                <!-- Security Settings -->
-                <div class="settings-group">
-                    <h4 class="red"><i class="fa-solid fa-lock"></i> Security Settings</h4>
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <input type="password" id="currentPassword" class="input-field" style="max-width: 600px;">
-                    </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <input type="password" id="newPassword" class="input-field" style="max-width: 600px;">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <input type="password" id="confirmNewPassword" class="input-field" style="max-width: 600px;">
-                    </div>
-                    <button class="btn btn-primary" onclick="changePassword()"
-                        style="background-color: #dc3545; border-color: #dc3545;">
-                        Update Password
+            <div class="settings-header">
+                <h3><i class="fa-solid fa-sliders"></i> System Settings</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-outline" onclick="resetSettings()">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fa-solid fa-save"></i> Save Changes
                     </button>
                 </div>
+            </div>
 
-                <div class="settings-group">
-                    <h4 class="blue"><i class="fa-solid fa-cloud-arrow-up"></i> Sync & Deployment</h4>
-                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
-                        If you are using GitHub Pages, changes made here are saved to your browser only.
-                        To update the website for everyone, download your updated database and replace the
-                        <code>db.json</code> file in your repository.
-                    </p>
-                    <button class="btn btn-primary" onclick="exportDB()">
-                        <i class="fa-solid fa-download"></i> Download Updated db.json
-                    </button>
-                    <button class="btn btn-outline"
-                        onclick="localStorage.removeItem('varshini_db_cache'); location.reload();"
-                        style="margin-left: 10px;">
-                        <i class="fa-solid fa-trash-can"></i> Reset Local Cache
-                    </button>
+            <div class="settings-grid">
+                <!-- Profile / General Settings Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box blue"><i class="fa-solid fa-user-gear"></i></div>
+                        <h4>General Profile</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="siteName" placeholder=" " value="Varshini Industries">
+                            <label>Site Name</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="email" id="adminEmail" placeholder=" " value="info@varshiniindustrries.com">
+                            <label>Admin Email</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="contactPhone" placeholder=" " value="+91-8047838824">
+                            <label>Contact Phone</label>
+                        </div>
+                    </div>
                 </div>
 
-                <button class="btn btn-primary" onclick="saveSettings()" style="margin-top: 20px;">
-                    <i class="fa-solid fa-save"></i> Save All Settings
-                </button>
-                <button class="btn btn-outline" onclick="resetSettings()" style="margin-left: 10px;">
-                    <i class="fa-solid fa-rotate-left"></i> Reset to Defaults
-                </button>
-            </section>
+                <!-- Security Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box red"><i class="fa-solid fa-lock"></i></div>
+                        <h4>Security</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="password" id="currentPassword" placeholder=" ">
+                            <label>Current Password</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="newPassword" placeholder=" ">
+                            <label>New Password</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="confirmNewPassword" placeholder=" ">
+                            <label>Confirm Password</label>
+                        </div>
+                        <button class="btn btn-danger full-width" onclick="changePassword()">
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SEO Management Card -->
+                <div class="settings-card wide">
+                    <div class="card-header">
+                        <div class="icon-box purple"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <h4>SEO Management</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="seoTitle" placeholder=" "
+                                value="Varshini Industries | Industrial Pumping Solutions">
+                            <label>Meta Title</label>
+                            <small>Recommended: 50-60 characters</small>
+                        </div>
+                        <div class="input-group">
+                            <textarea id="seoDescription" rows="3"
+                                placeholder=" ">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
+                            <label>Meta Description</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="seoKeywords" placeholder=" "
+                                value="industrial pumps, monoblock pumps, submersible pumps">
+                            <label>Keywords (comma-separated)</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="ogImage" placeholder=" " value="Logo.jpeg">
+                            <label>Social Share Image URL</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box yellow"><i class="fa-solid fa-chart-pie"></i></div>
+                        <h4>Analytics</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="gaId" placeholder=" ">
+                            <label>Google Analytics ID</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="fbPixel" placeholder=" ">
+                            <label>Facebook Pixel ID</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deployment & Sync Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box green"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                        <h4>Sync & Deploy</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="info-text">
+                            For GitHub Pages: Changes are saved locally. Download the DB to update live site.
+                        </p>
+                        <div class="button-group-vertical">
+                            <button class="btn btn-primary-soft full-width" onclick="exportDB()">
+                                <i class="fa-solid fa-download"></i> Download db.json
+                            </button>
+                            <button class="btn btn-outline-danger full-width"
+                                onclick="localStorage.removeItem('varshini_db_cache'); location.reload();">
+                                <i class="fa-solid fa-trash-can"></i> Reset Cache
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </main>

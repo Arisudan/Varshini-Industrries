@@ -879,6 +879,203 @@ ul {
     font-size: 1.2rem;
 }
 
+/* Modern Settings Card Grid */
+
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.settings-header h3 {
+    color: var(--navy);
+    font-size: 1.5rem;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 25px;
+}
+
+.settings-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    /* Soft Shadow */
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.settings-card.wide {
+    grid-column: span 2;
+}
+
+@media (max-width: 1100px) {
+    .settings-card.wide {
+        grid-column: span 1;
+    }
+}
+
+.card-header {
+    background: rgba(248, 249, 250, 0.5);
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--navy);
+    font-weight: 700;
+}
+
+.icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.icon-box.blue {
+    background: linear-gradient(135deg, #4361ee, #4895ef);
+}
+
+.icon-box.red {
+    background: linear-gradient(135deg, #e63946, #f72585);
+}
+
+.icon-box.yellow {
+    background: linear-gradient(135deg, #fca311, #ffb703);
+}
+
+.icon-box.green {
+    background: linear-gradient(135deg, #2a9d8f, #264653);
+}
+
+.icon-box.purple {
+    background: linear-gradient(135deg, #7209b7, #560bad);
+}
+
+.card-body {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Floating Label Inputs */
+.input-group {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.input-group input,
+.input-group textarea {
+    width: 100%;
+    padding: 12px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    outline: none;
+    font-size: 0.95rem;
+    transition: 0.2s;
+    background: transparent;
+}
+
+.input-group label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: #888;
+    pointer-events: none;
+    transition: 0.2s ease all;
+    background: #fff;
+    padding: 0 4px;
+    font-size: 0.95rem;
+}
+
+.input-group input:focus,
+.input-group textarea:focus,
+.input-group input:not(:placeholder-shown),
+.input-group textarea:not(:placeholder-shown) {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(0, 180, 216, 0.1);
+}
+
+.input-group input:focus~label,
+.input-group textarea:focus~label,
+.input-group input:not(:placeholder-shown)~label,
+.input-group textarea:not(:placeholder-shown)~label {
+    top: -8px;
+    left: 10px;
+    font-size: 0.75rem;
+    color: var(--teal);
+    font-weight: 600;
+}
+
+.info-text {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.4;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid var(--teal);
+}
+
+.full-width {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-primary-soft {
+    background: rgba(0, 180, 216, 0.1);
+    color: var(--teal);
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-primary-soft:hover {
+    background: var(--teal);
+    color: white;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    padding: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
 canvas {
     max-height: 300px;
 }
