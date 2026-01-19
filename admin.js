@@ -473,6 +473,7 @@ function closeModal() {
     if (modal) modal.style.display = 'none';
     if (form) form.reset();
     if (previewContainer) previewContainer.style.display = 'none';
+    document.body.style.overflow = '';
 }
 
 window.openAddProductModal = () => {
@@ -487,6 +488,7 @@ window.openAddProductModal = () => {
 
     if (title) title.textContent = 'Add New Pump';
     if (modal) modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
 };
 
 window.editProduct = async (id) => {
@@ -536,6 +538,7 @@ window.editProduct = async (id) => {
 
         if (title) title.textContent = 'Edit Product';
         if (modal) modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
     } catch (error) {
         alert('Error loading product: ' + error.message);
     }
