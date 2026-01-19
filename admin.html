@@ -348,26 +348,6 @@
                 </div>
 
                 <!-- Deployment & Sync Card -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <div class="icon-box green"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                        <h4>Sync & Deploy</h4>
-                    </div>
-                    <div class="card-body">
-                        <p class="info-text">
-                            For GitHub Pages: Changes are saved locally. Download the DB to update live site.
-                        </p>
-                        <div class="button-group-vertical">
-                            <button class="btn btn-primary-soft full-width" onclick="exportDB()">
-                                <i class="fa-solid fa-download"></i> Download db.json
-                            </button>
-                            <button class="btn btn-outline-danger full-width"
-                                onclick="localStorage.removeItem('varshini_db_cache'); location.reload();">
-                                <i class="fa-solid fa-trash-can"></i> Reset Cache
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
             </div>
         </div>
@@ -453,6 +433,14 @@
             </form>
         </div>
     </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
 
     <script src="admin.js"></script>
     <script src="charts.js"></script>

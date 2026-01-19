@@ -7,44 +7,119 @@ function isStaticMode() {
     return localStorage.getItem('static_mode') === 'true';
 }
 
-// VIRTUAL DATABASE FOR STATIC MODE
-let staticDB = null;
+// --- CENTRAL DATA SERVICE (FIREBASE + Local Fallback) ---
+const DataService = {
+    async getCollection(collectionName) {
+        // 1. Try Firebase Firestore
+        if (typeof db !== 'undefined' && db) {
+            try {
+                const snapshot = await db.collection(collectionName).get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (e) {
+                console.error(`Error fetching ${collectionName} from Firebase:`, e);
+                // Fallback to local if error (e.g. permissions or quota)
+            }
+        }
 
-async function getStaticDB() {
-    if (staticDB) return staticDB;
+        // 2. Fallback to Local/Static DB
+        const staticData = await this._getStaticDB();
+        return staticData[collectionName] || [];
+    },
 
-    const cached = localStorage.getItem('varshini_db_cache');
-    if (cached) {
-        staticDB = JSON.parse(cached);
-        return staticDB;
+    async addItem(collectionName, item) {
+        if (typeof db !== 'undefined' && db) {
+            try {
+                // If item has ID, use it, else auto-gen
+                if (item.id) {
+                    await db.collection(collectionName).doc(String(item.id)).set(item);
+                } else {
+                    const docRef = await db.collection(collectionName).add(item);
+                    item.id = docRef.id;
+                }
+                return item;
+            } catch (e) {
+                console.error(`Firestore Write Error (${collectionName}):`, e);
+            }
+        }
+
+        // Static Fallback
+        const dbStatic = await this._getStaticDB();
+        if (!dbStatic[collectionName]) dbStatic[collectionName] = [];
+        // Ensure ID
+        if (!item.id) item.id = Date.now();
+        dbStatic[collectionName].push(item);
+        this._persistStaticDB(dbStatic);
+        return item;
+    },
+
+    async updateItem(collectionName, id, updates) {
+        if (typeof db !== 'undefined' && db) {
+            try {
+                await db.collection(collectionName).doc(String(id)).update(updates);
+                return;
+            } catch (e) {
+                // If document doesn't exist, we might need set.
+                console.error("Firestore Update Error:", e);
+            }
+        }
+
+        // Static Fallback
+        const dbStatic = await this._getStaticDB();
+        if (!dbStatic[collectionName]) return;
+        const idx = dbStatic[collectionName].findIndex(i => i.id == id);
+        if (idx !== -1) {
+            dbStatic[collectionName][idx] = { ...dbStatic[collectionName][idx], ...updates };
+            this._persistStaticDB(dbStatic);
+        }
+    },
+
+    async deleteItem(collectionName, id) {
+        if (typeof db !== 'undefined' && db) {
+            try {
+                await db.collection(collectionName).doc(String(id)).delete();
+                return;
+            } catch (e) { console.error("Firestore Delete Error:", e); }
+        }
+
+        // Static Fallback
+        const dbStatic = await this._getStaticDB();
+        if (!dbStatic[collectionName]) return;
+        dbStatic[collectionName] = dbStatic[collectionName].filter(i => i.id != id);
+        this._persistStaticDB(dbStatic);
+    },
+
+    // --- Internal Static DB Logic ---
+    async _getStaticDB() {
+        const cached = localStorage.getItem('varshini_db_cache');
+        if (cached) return JSON.parse(cached);
+        try {
+            const res = await fetch('./db.json');
+            const data = await res.json();
+            localStorage.setItem('varshini_db_cache', JSON.stringify(data));
+            return data;
+        } catch (e) {
+            return { products: [], leads: [], warranties: [], categories: [] };
+        }
+    },
+
+    _persistStaticDB(data) {
+        localStorage.setItem('varshini_db_cache', JSON.stringify(data));
     }
+};
 
-    // Initial load from file
-    try {
-        const res = await fetch('./db.json');
-        staticDB = await res.json();
-        persistStaticDB();
-        return staticDB;
-    } catch (e) {
-        return { products: [], leads: [], warranties: [], categories: [] };
-    }
-}
+// Legacy Helper for simple calls if needed
+async function getStaticDB() { return DataService._getStaticDB(); }
+function persistStaticDB() { /* handled by service */ }
 
-function persistStaticDB() {
-    if (staticDB) {
-        localStorage.setItem('varshini_db_cache', JSON.stringify(staticDB));
-    }
-}
-
+// Export DB Function (Only needed if NOT using Firebase)
 function exportDB() {
-    if (!staticDB) return;
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(staticDB, null, 4));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "db.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    DataService._getStaticDB().then(db => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 4));
+        const anchor = document.createElement('a');
+        anchor.href = dataStr;
+        anchor.download = "db.json";
+        anchor.click();
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -157,70 +232,35 @@ function setupViewSwitching() {
 
 async function refreshDashboard() {
     try {
-        const token = localStorage.getItem('auth_token');
+        // Fetch all data in parallel using DataService
+        const [products, leads, warranties, categories] = await Promise.all([
+            DataService.getCollection('products'),
+            DataService.getCollection('leads'),
+            DataService.getCollection('warranties'),
+            DataService.getCollection('categories')
+        ]);
 
-        // STATIC MODE PERSISTENCE
-        if (isStaticMode()) {
-            console.log("Admin running in Static/Demo mode.");
-            const db = await getStaticDB();
+        // Calculate Stats
+        const stats = {
+            products: products.length,
+            monthLeads: leads.length,
+            totalWarranties: warranties.length,
+            newWarranties: warranties.filter(w => w.status === 'Pending').length
+        };
 
-            // Mock dynamic stats based on JSON content
-            const products = db.products || [];
-            const leads = db.leads || [];
-            const warranties = db.warranties || [];
-            const categories = db.categories || [];
-
-            const mockStats = {
-                products: products.length,
-                monthLeads: leads.length,
-                totalWarranties: warranties.length,
-                newWarranties: warranties.filter(w => w.status === 'Pending').length
-            };
-
-            renderStats(mockStats);
-            renderProducts(products);
-            renderLeads(leads);
-            renderWarranties(warranties);
-            renderCategories(categories);
-
-            if (typeof initializeCharts === 'function') {
-                setTimeout(() => initializeCharts(), 100);
-            }
-            return;
-        }
-
-        // LIVE API MODE
-        const response = await fetch(`${API_BASE}/dashboard`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        }).catch(err => {
-            // Treat connection failures as an indicator to switch to static or show error
-            throw new Error("CONNECTION_ERROR");
-        });
-
-        if (response.status === 401 || response.status === 403) {
-            window.location.href = 'login.html';
-            return;
-        }
-
-        if (!response.ok) throw new Error('Server returned ' + response.status);
-
-        const data = await response.json();
-        renderStats(data.stats);
-        renderProducts(data.products);
-        renderLeads(data.leads);
-        renderWarranties(data.warranties);
-        renderCategories(data.categories || []);
+        renderStats(stats);
+        renderProducts(products);
+        renderLeads(leads);
+        renderWarranties(warranties);
+        renderCategories(categories);
 
         if (typeof initializeCharts === 'function') {
             setTimeout(() => initializeCharts(), 100);
         }
+
     } catch (error) {
-        console.error('Error fetching data:', error);
-        if (error.message === "CONNECTION_ERROR") {
-            showError('Unable to connect to live database. You are in Demo Mode. Changes will only save locally in your browser.');
-        } else {
-            showError('Something went wrong. ' + error.message);
-        }
+        console.error('Error fetching dashboard data:', error);
+        showError('Unable to load data. ' + error.message);
     }
 }
 
@@ -496,19 +536,7 @@ window.openAddProductModal = () => {
 
 window.editProduct = async (id) => {
     try {
-        let products = [];
-        if (isStaticMode()) {
-            const res = await fetch('./db.json');
-            const data = await res.json();
-            products = data.products || [];
-        } else {
-            const response = await fetch(`${API_BASE}/dashboard`, {
-                headers: getAuthHeader()
-            });
-            await handleResponse(response);
-            const data = await response.json();
-            products = data.products || [];
-        }
+        const products = await DataService.getCollection('products');
         const product = products.find(p => p.id === id);
 
         if (!product) {
@@ -548,92 +576,49 @@ window.editProduct = async (id) => {
 };
 
 async function saveProduct(formData) {
-    if (isStaticMode()) {
-        const db = await getStaticDB();
-        const id = formData.get('id');
-        const newProduct = {
-            id: id ? parseInt(id) : Date.now(),
+    try {
+        const id = formData.get('productId'); // Changed from 'id' to 'productId' to match form input
+        const productData = {
+            id: id ? (isNaN(id) ? id : parseInt(id)) : Date.now().toString(),
             name: formData.get('name'),
             category: formData.get('category'),
             series: formData.get('series'),
             hp: formData.get('hp'),
             price: formData.get('price'),
             stock: formData.get('stock'),
-            image: formData.get('currentImage') || 'assets/placeholder.png'
+            // Note: File upload not supported in pure Firestore-only migration without Firebase Storage.
+            // We use the existing image path or a placeholder.
+            image: formData.get('currentImagePath') || 'assets/placeholder.png' // Changed from 'existingImage' to 'currentImagePath'
         };
 
-        if (id) {
-            const idx = db.products.findIndex(p => p.id === parseInt(id));
-            if (idx !== -1) db.products[idx] = newProduct;
-        } else {
-            db.products.push(newProduct);
-        }
+        // If file input has a file, we can't upload to API_BASE if it's dead. 
+        // We'll rely on the string path for now or assume user handles assets manually in repo.
+        // TODO: Integrate Firebase Storage for real uploads.
 
-        persistStaticDB();
-        alert('✅ Static Mode: Product saved to browser storage.');
-        closeModal();
-        refreshDashboard();
-        return;
-    }
-    const id = formData.get('id');
-
-    try {
         if (id) {
-            const response = await fetch(`${API_BASE}/products/${id}`, {
-                method: 'PUT',
-                headers: getAuthHeader(),
-                body: formData
-            });
-            await handleResponse(response);
-            if (response.ok) {
-                alert('✅ Product updated successfully!');
-            } else { throw new Error('Server error'); }
+            await DataService.updateItem('products', productData.id, productData);
+            alert('✅ Product updated successfully!');
         } else {
-            const response = await fetch(`${API_BASE}/products`, {
-                method: 'POST',
-                headers: getAuthHeader(),
-                body: formData
-            });
-            await handleResponse(response);
-            if (response.ok) {
-                alert('✅ Product added successfully!');
-            } else { throw new Error('Server error'); }
+            await DataService.addItem('products', productData);
+            alert('✅ Product added successfully!');
         }
 
         closeModal();
         refreshDashboard();
+
     } catch (error) {
-        alert('❌ Error saving product: ' + error.message);
+        alert('Error saving product: ' + error.message);
     }
 }
 
 window.deleteProduct = async (id) => {
-    if (isStaticMode()) {
-        if (!confirm('Are you sure you want to delete this product? (Static Mode)')) return;
-        const db = await getStaticDB();
-        db.products = db.products.filter(p => p.id !== id);
-        persistStaticDB();
-        alert('✅ Static Mode: Product removed from browser storage.');
-        refreshDashboard();
-        return;
-    }
-    if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
-
+    if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-        const response = await fetch(`${API_BASE}/products/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-
-        if (response.ok) {
-            alert('✅ Product deleted successfully!');
-            refreshDashboard();
-        } else {
-            throw new Error('Server error');
-        }
+        await DataService.deleteItem('products', id);
+        alert('✅ Product deleted successfully!');
+        refreshDashboard();
     } catch (error) {
-        alert('❌ Error deleting product: ' + error.message);
+        alert('Error deleting product: ' + error.message);
     }
 };
 
@@ -701,8 +686,9 @@ window.deleteLead = async (id) => {
 
 // --- SETTINGS ---
 
-window.saveSettings = function () {
+window.saveSettings = async function () {
     const settings = {
+        id: 'global',
         siteName: document.getElementById('siteName')?.value,
         adminEmail: document.getElementById('adminEmail')?.value,
         contactPhone: document.getElementById('contactPhone')?.value,
@@ -714,27 +700,29 @@ window.saveSettings = function () {
         fbPixel: document.getElementById('fbPixel')?.value
     };
 
-    // If in Static Mode, save to the downloadable DB
-    if (isStaticMode()) {
-        getStaticDB().then(db => {
-            db.settings = settings;
-            persistStaticDB();
-        });
+    try {
+        // Try to update existing, or create if not exists
+        // Since DataService.updateItem might fail if doc doesn't exist in Firestore,
+        // and addItem might fail if ID exists.
+        // Best approach for singleton: Try set (which addItem does with ID)
+        await DataService.addItem('settings', settings);
+
+        // Also save to localStorage for immediate sync/offline
+        localStorage.setItem('varshini_settings', JSON.stringify(settings));
+
+        const btn = event.target || document.querySelector('.settings-header .btn-primary');
+        if (btn) {
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+            setTimeout(() => {
+                btn.innerHTML = original;
+            }, 2000);
+        }
+
+        alert('✅ Settings saved! Note: SEO changes require manual HTML updates.');
+    } catch (e) {
+        alert('Error saving settings: ' + e.message);
     }
-
-    localStorage.setItem('varshini_settings', JSON.stringify(settings));
-
-    const btn = event.target;
-    const original = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
-    btn.style.backgroundColor = '#28a745';
-
-    setTimeout(() => {
-        btn.innerHTML = original;
-        btn.style.backgroundColor = '';
-    }, 2000);
-
-    alert('✅ Settings saved! Note: SEO changes require manual HTML updates.');
 };
 
 window.changePassword = async function () {
@@ -792,24 +780,28 @@ window.resetSettings = function () {
 };
 
 window.loadSettings = async function () {
-    let settings = JSON.parse(localStorage.getItem('varshini_settings'));
+    try {
+        const settingsCollection = await DataService.getCollection('settings');
+        let settings = settingsCollection.find(s => s.id === 'global');
 
-    // If not in local storage but in static mode, check static DB
-    if (!settings && isStaticMode()) {
-        const db = await getStaticDB();
-        settings = db.settings;
-    }
+        // Fallback to localStorage if not found in DB
+        if (!settings) {
+            settings = JSON.parse(localStorage.getItem('varshini_settings'));
+        }
 
-    if (settings) {
-        if (document.getElementById('siteName')) document.getElementById('siteName').value = settings.siteName || '';
-        if (document.getElementById('adminEmail')) document.getElementById('adminEmail').value = settings.adminEmail || '';
-        if (document.getElementById('contactPhone')) document.getElementById('contactPhone').value = settings.contactPhone || '';
-        if (document.getElementById('seoTitle')) document.getElementById('seoTitle').value = settings.seoTitle || '';
-        if (document.getElementById('seoDescription')) document.getElementById('seoDescription').value = settings.seoDescription || '';
-        if (document.getElementById('seoKeywords')) document.getElementById('seoKeywords').value = settings.seoKeywords || '';
-        if (document.getElementById('ogImage')) document.getElementById('ogImage').value = settings.ogImage || '';
-        if (document.getElementById('gaId')) document.getElementById('gaId').value = settings.gaId || '';
-        if (document.getElementById('fbPixel')) document.getElementById('fbPixel').value = settings.fbPixel || '';
+        if (settings) {
+            if (document.getElementById('siteName')) document.getElementById('siteName').value = settings.siteName || '';
+            if (document.getElementById('adminEmail')) document.getElementById('adminEmail').value = settings.adminEmail || '';
+            if (document.getElementById('contactPhone')) document.getElementById('contactPhone').value = settings.contactPhone || '';
+            if (document.getElementById('seoTitle')) document.getElementById('seoTitle').value = settings.seoTitle || '';
+            if (document.getElementById('seoDescription')) document.getElementById('seoDescription').value = settings.seoDescription || '';
+            if (document.getElementById('seoKeywords')) document.getElementById('seoKeywords').value = settings.seoKeywords || '';
+            if (document.getElementById('ogImage')) document.getElementById('ogImage').value = settings.ogImage || '';
+            if (document.getElementById('gaId')) document.getElementById('gaId').value = settings.gaId || '';
+            if (document.getElementById('fbPixel')) document.getElementById('fbPixel').value = settings.fbPixel || '';
+        }
+    } catch (e) {
+        console.error("Error loading settings:", e);
     }
 };
 
@@ -986,29 +978,19 @@ window.searchLeads = function (query) {
 
 async function loadCategories() {
     try {
-        if (isStaticMode()) {
-            const db = await getStaticDB();
-            let categories = db.categories || [];
-            const products = db.products || [];
+        const [categories, products] = await Promise.all([
+            DataService.getCollection('categories'),
+            DataService.getCollection('products')
+        ]);
 
-            // Calculate Counts locally
-            const categoriesWithCounts = categories.map(c => ({
-                ...c,
-                count: products.filter(p => p.category === c.name).length
-            }));
+        // Calculate Counts locally
+        const categoriesWithCounts = categories.map(c => ({
+            ...c,
+            count: products.filter(p => p.category === c.name).length
+        }));
 
-            renderCategories(categoriesWithCounts);
-            populateCategoryDropdown(categoriesWithCounts);
-            return;
-        }
-
-        const response = await fetch(`${API_BASE}/categories`, {
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-        const categories = await response.json();
-        renderCategories(categories);
-        populateCategoryDropdown(categories);
+        renderCategories(categoriesWithCounts);
+        populateCategoryDropdown(categoriesWithCounts);
     } catch (error) {
         console.error('Error loading categories:', error);
     }
@@ -1209,44 +1191,20 @@ const addCategoryForm = document.getElementById('addCategoryForm');
 if (addCategoryForm) {
     addCategoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const name = addCategoryForm.name.value;
+        const name = addCategoryForm.name.value.trim();
+        if (!name) return;
 
-        if (isStaticMode()) {
-            const db = await getStaticDB();
-            if (!db.categories) db.categories = [];
-
-            if (db.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        try {
+            const categories = await DataService.getCollection('categories');
+            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
                 alert('Category already exists');
                 return;
             }
 
-            db.categories.push({ id: Date.now(), name });
-            persistStaticDB();
-
-            alert('✅ Static Mode: Category added.');
+            await DataService.addItem('categories', { id: Date.now(), name });
+            alert('✅ Category added successfully!');
             closeCategoryModal();
             loadCategories();
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/categories`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeader()
-                },
-                body: JSON.stringify({ name })
-            });
-
-            const data = await response.json();
-            if (response.ok) {
-                alert('✅ Category added successfully!');
-                closeCategoryModal();
-                loadCategories();
-            } else {
-                alert('Error: ' + data.message);
-            }
         } catch (error) {
             alert('Error adding category: ' + error.message);
         }
@@ -1261,39 +1219,23 @@ function closeCategoryModal() {
 }
 
 window.deleteCategory = async (id) => {
-    if (isStaticMode()) {
-        if (!confirm('Delete this category? (Static Mode)')) return;
-        const db = await getStaticDB();
+    if (!confirm('Delete this category? This cannot be undone.')) return;
 
-        const catName = db.categories.find(c => c.id === id)?.name;
-        if (catName && db.products.some(p => p.category === catName)) {
+    try {
+        const categories = await DataService.getCollection('categories');
+        const products = await DataService.getCollection('products');
+
+        const category = categories.find(c => c.id === id);
+        if (!category) return;
+
+        if (products.some(p => p.category === category.name)) {
             alert('Cannot delete category with associated products.');
             return;
         }
 
-        db.categories = db.categories.filter(c => c.id !== id);
-        persistStaticDB();
-
-        alert('✅ Static Mode: Category deleted.');
+        await DataService.deleteItem('categories', id);
+        alert('✅ Category deleted!');
         loadCategories();
-        return;
-    }
-
-    if (!confirm('Delete this category? This cannot be undone.')) return;
-
-    try {
-        const response = await fetch(`${API_BASE}/categories/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeader()
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert('✅ Category deleted!');
-            loadCategories();
-        } else {
-            alert('Error: ' + data.message);
-        }
     } catch (error) {
         alert('Error deleting category: ' + error.message);
     }
