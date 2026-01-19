@@ -250,20 +250,39 @@ let allProducts = [];
 
 async function fetchPublicProducts() {
     try {
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
-        const fetchUrl = isLocal ? '/api/public/products' : './db.json';
+        let data = [];
 
-        console.log(`Fetching products from: ${fetchUrl}`);
-        const res = await fetch(fetchUrl);
+        // 1. Try Firebase Firestore
+        if (typeof db !== 'undefined' && db) {
+            console.log("Fetching products from Firebase Firestore...");
+            try {
+                const snapshot = await db.collection('products').get();
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log(`Loaded ${allProducts.length} products from Firebase.`);
+            } catch (fbError) {
+                console.error("Firebase fetch error, falling back to static:", fbError);
+                // Fallback will happen below if allProducts is empty
+            }
+        }
 
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        // 2. Fallback to Static (db.json) if Firebase failed or didn't run
+        if (allProducts.length === 0) {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000';
+            const fetchUrl = isLocal ? '/api/public/products' : 'db.json'; // simplified path
 
-        const data = await res.json();
-        // If it was db.json, it's an object with products array
-        allProducts = Array.isArray(data) ? data : (data.products || []);
+            console.log(`Fetching products from: ${fetchUrl}`);
+            const res = await fetch(fetchUrl);
+
+            if (res.ok) {
+                const jsonData = await res.json();
+                allProducts = Array.isArray(jsonData) ? jsonData : (jsonData.products || []);
+            } else {
+                console.warn(`Static fetch failed: ${res.status}`);
+            }
+        }
 
         if (allProducts.length === 0) {
-            console.warn('No products found in data source');
+            console.warn('No products found in any data source');
         }
 
         populateMegaMenu(allProducts);

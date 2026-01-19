@@ -1241,6 +1241,62 @@ window.deleteCategory = async (id) => {
     }
 };
 
+// --- MIGRATION UTILITY ---
+window.importStaticToFirebase = async () => {
+    if (!confirm('This will upload data from db.json to Firebase. Continue?')) return;
+
+    try {
+        const res = await fetch('db.json');
+        if (!res.ok) throw new Error("Could not find db.json");
+        const data = await res.json();
+
+        let count = 0;
+
+        // Products
+        if (data.products) {
+            const existing = await DataService.getCollection('products');
+            for (const p of data.products) {
+                if (!existing.find(e => e.id == p.id)) {
+                    await DataService.addItem('products', { ...p, id: p.id || Date.now() });
+                    count++;
+                }
+            }
+        }
+
+        // Categories
+        if (data.categories) {
+            const existing = await DataService.getCollection('categories');
+            for (const c of data.categories) {
+                if (!existing.find(e => e.name === c.name)) {
+                    await DataService.addItem('categories', { ...c, id: c.id || Date.now() });
+                    count++;
+                }
+            }
+        }
+
+        // Leads
+        if (data.leads) {
+            for (const l of data.leads) {
+                await DataService.addItem('leads', { ...l, id: l.id || Date.now() });
+                count++;
+            }
+        }
+
+        // Settings
+        if (data.settings) {
+            await DataService.addItem('settings', { ...data.settings, id: 'global' });
+            count++;
+        }
+
+        alert(`✅ Migration Complete! Imported ${count} items to Firebase.`);
+        refreshDashboard();
+
+    } catch (e) {
+        alert('Migration Failed: ' + e.message);
+        console.error(e);
+    }
+};
+
 window.openAddCategoryModal = () => {
     const modal = document.getElementById('addCategoryModal');
     if (modal) modal.style.display = 'flex';
