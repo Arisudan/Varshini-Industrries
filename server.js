@@ -118,6 +118,32 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
+app.post('/api/change-password', isAuthenticated, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const db = readDb();
+
+    // Find user from token/session
+    // In production, use req.user.username from JWT
+    const username = req.user ? req.user.username : (req.session.user ? req.session.user.username : 'admin');
+    const userIndex = db.users.findIndex(u => u.username === username);
+
+    if (userIndex === -1) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = db.users[userIndex];
+    if (!bcrypt.compareSync(currentPassword, user.password)) {
+        return res.status(400).json({ success: false, message: 'Incorrect current password' });
+    }
+
+    // Update password
+    const salt = bcrypt.genSaltSync(10);
+    db.users[userIndex].password = bcrypt.hashSync(newPassword, salt);
+    writeDb(db);
+
+    res.json({ success: true, message: 'Password updated successfully' });
+});
+
 // --- PUBLIC APIs ---
 app.get('/api/public/products', (req, res) => {
     const db = readDb();

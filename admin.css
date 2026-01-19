@@ -797,6 +797,14 @@ ul {
     border-color: var(--yellow);
 }
 
+.settings-group h4.red {
+    border-color: #dc3545;
+}
+
+.settings-group h4.blue {
+    border-color: #0d6efd;
+}
+
 @media (max-width: 768px) {
     .flex-group {
         flex-direction: column;

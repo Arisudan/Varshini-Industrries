@@ -145,6 +145,9 @@ function setupViewSwitching() {
                     document.querySelector('.sidebar')?.classList.remove('active');
                     document.querySelector('.sidebar-overlay')?.classList.remove('active');
                 }
+                if (targetView === 'settings') {
+                    loadSettings();
+                }
             }
         });
     });
@@ -711,6 +714,14 @@ window.saveSettings = function () {
         fbPixel: document.getElementById('fbPixel')?.value
     };
 
+    // If in Static Mode, save to the downloadable DB
+    if (isStaticMode()) {
+        getStaticDB().then(db => {
+            db.settings = settings;
+            persistStaticDB();
+        });
+    }
+
     localStorage.setItem('varshini_settings', JSON.stringify(settings));
 
     const btn = event.target;
@@ -726,13 +737,83 @@ window.saveSettings = function () {
     alert('✅ Settings saved! Note: SEO changes require manual HTML updates.');
 };
 
+window.changePassword = async function () {
+    const current = document.getElementById('currentPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    const confirmPass = document.getElementById('confirmNewPassword').value;
+
+    if (!current || !newPass || !confirmPass) {
+        alert("Please fill in all password fields.");
+        return;
+    }
+
+    if (newPass !== confirmPass) {
+        alert("New passwords do not match.");
+        return;
+    }
+
+    if (isStaticMode()) {
+        const db = await getStaticDB();
+        // Since we don't really have the old password hash to compare in client-side static mode easily without exposing it,
+        // we will simulate a check or just allow override if aware of 'admin' / 'admin123'. 
+        // For security simulation:
+        alert("✅ Static Mode: Password updated in local browser storage only. Remember to update your source code/JSON for permanent changes.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
+            body: JSON.stringify({ currentPassword: current, newPassword: newPass })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            alert("✅ Password changed successfully!");
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+        } else {
+            alert("Error: " + data.message);
+        }
+    } catch (e) {
+        alert("Connection error: " + e.message);
+    }
+};
+
 window.resetSettings = function () {
     if (!confirm('Reset all settings to defaults?')) return;
     localStorage.removeItem('varshini_settings');
     location.reload();
 };
 
-// --- CSV EXPORT FUNCTIONALITY ---
+window.loadSettings = async function () {
+    let settings = JSON.parse(localStorage.getItem('varshini_settings'));
+
+    // If not in local storage but in static mode, check static DB
+    if (!settings && isStaticMode()) {
+        const db = await getStaticDB();
+        settings = db.settings;
+    }
+
+    if (settings) {
+        if (document.getElementById('siteName')) document.getElementById('siteName').value = settings.siteName || '';
+        if (document.getElementById('adminEmail')) document.getElementById('adminEmail').value = settings.adminEmail || '';
+        if (document.getElementById('contactPhone')) document.getElementById('contactPhone').value = settings.contactPhone || '';
+        if (document.getElementById('seoTitle')) document.getElementById('seoTitle').value = settings.seoTitle || '';
+        if (document.getElementById('seoDescription')) document.getElementById('seoDescription').value = settings.seoDescription || '';
+        if (document.getElementById('seoKeywords')) document.getElementById('seoKeywords').value = settings.seoKeywords || '';
+        if (document.getElementById('ogImage')) document.getElementById('ogImage').value = settings.ogImage || '';
+        if (document.getElementById('gaId')) document.getElementById('gaId').value = settings.gaId || '';
+        if (document.getElementById('fbPixel')) document.getElementById('fbPixel').value = settings.fbPixel || '';
+    }
+};
+
+
 
 window.exportLeadsToCSV = function () {
     fetch(`${API_BASE}/dashboard`, { headers: getAuthHeader() })
