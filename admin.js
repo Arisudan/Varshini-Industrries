@@ -140,8 +140,52 @@ document.addEventListener('DOMContentLoaded', () => {
         dateDisplay.textContent = new Date().toLocaleDateString('en-US', options);
     }
 
-    // Load Dashboard Data
-    refreshDashboard();
+    // --- EXPORT FUNCTIONS ---
+    window.exportProductsToCSV = async () => {
+        try {
+            const products = await DataService.getCollection('products');
+            if (!products.length) return showNotification('No products to export', 'error');
+
+            const headers = ['ID', 'Name', 'Category', 'Series', 'HP', 'Price', 'Stock'];
+            const rows = products.map(p => [
+                p.id, p.name, p.category, p.series, p.hp, p.price, p.stock
+            ].map(e => `"${e || ''}"`).join(',')); // Escape quotes
+
+            downloadCSV([headers.join(','), ...rows].join('\n'), 'products_catalog.csv');
+        } catch (e) {
+            showNotification('Export failed: ' + e.message, 'error');
+        }
+    };
+
+    window.exportLeadsToCSV = async () => {
+        try {
+            const leads = await DataService.getCollection('leads');
+            if (!leads.length) return showNotification('No leads to export', 'error');
+
+            const headers = ['Date', 'Client', 'Interest', 'Email', 'Phone', 'Status'];
+            const rows = leads.map(l => [
+                l.date, l.client, l.interest, l.contact?.email, l.contact?.phone, l.status
+            ].map(e => `"${e || ''}"`).join(','));
+
+            downloadCSV([headers.join(','), ...rows].join('\n'), 'customer_inquiries.csv');
+        } catch (e) {
+            showNotification('Export failed: ' + e.message, 'error');
+        }
+    };
+
+    function downloadCSV(csvContent, fileName) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
 
     // Mobile Sidebar Toggle
     setupMobileSidebar();
@@ -184,11 +228,20 @@ function setupMobileSidebar() {
 function setupLogout() {
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
-        logoutBtn.removeAttribute('onclick');
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_name');
-            window.location.href = 'index.html';
+        logoutBtn.removeAttribute('onclick'); // remove inline handler if persists
+        logoutBtn.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to logout?")) {
+                try {
+                    if (typeof auth !== 'undefined' && auth) {
+                        await auth.signOut();
+                    }
+                } catch (e) { console.error("Firebase SignOut Error:", e); }
+
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('user_name');
+                localStorage.removeItem('static_mode');
+                window.location.href = 'login.html'; // Redirect to login, not index
+            }
         });
     }
 }
@@ -577,25 +630,47 @@ window.editProduct = async (id) => {
 
 async function saveProduct(formData) {
     try {
-        const id = formData.get('productId'); // Changed from 'id' to 'productId' to match form input
+        const id = formData.get('id'); // Note: Form usually has 'id' hidden input, verify name
+        // In previous view, it looked like 'productId'? Let's check admin.html line 381: name="id".
+        // But the previous code used formData.get('productId')? 
+        // Let's trust the previous code's intent but robustly check both or stick to what worked.
+        // Wait, line 589 says `const id = formData.get('productId')`.
+        // admin.html line 381: `<input type="hidden" name="id" id="productId">`
+        // formData.get('id') gets it by NAME attribute. So it should be 'id'.
+        // Why did the old code use 'productId'? maybe it was manually appended?
+        // I will use `formData.get('id')` as per standard HTML form behavior.
+
+        let productId = formData.get('id');
+
+        let imageValue = formData.get('existingImage') || 'assets/placeholder.png';
+
+        // Custom File Handling (Base64)
+        const file = formData.get('image');
+        if (file instanceof File && file.size > 0) {
+            if (file.size > 800 * 1024) {
+                alert("Image too large! Please use an image smaller than 800KB.");
+                return;
+            }
+            // Convert
+            imageValue = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
         const productData = {
-            id: id ? (isNaN(id) ? id : parseInt(id)) : Date.now().toString(),
+            id: productId ? (isNaN(productId) ? productId : parseInt(productId)) : Date.now().toString(),
             name: formData.get('name'),
             category: formData.get('category'),
             series: formData.get('series'),
             hp: formData.get('hp'),
             price: formData.get('price'),
             stock: formData.get('stock'),
-            // Note: File upload not supported in pure Firestore-only migration without Firebase Storage.
-            // We use the existing image path or a placeholder.
-            image: formData.get('currentImagePath') || 'assets/placeholder.png' // Changed from 'existingImage' to 'currentImagePath'
+            image: imageValue
         };
 
-        // If file input has a file, we can't upload to API_BASE if it's dead. 
-        // We'll rely on the string path for now or assume user handles assets manually in repo.
-        // TODO: Integrate Firebase Storage for real uploads.
-
-        if (id) {
+        if (productId) {
             await DataService.updateItem('products', productData.id, productData);
             alert('✅ Product updated successfully!');
         } else {
@@ -608,6 +683,7 @@ async function saveProduct(formData) {
 
     } catch (error) {
         alert('Error saving product: ' + error.message);
+        console.error(error);
     }
 }
 
@@ -623,32 +699,19 @@ window.deleteProduct = async (id) => {
 };
 
 window.updateLeadStatus = async (id, newStatus) => {
-    if (isStaticMode()) {
-        const db = await getStaticDB();
-        const lead = db.leads.find(l => l.id === id || l.id == id);
-        if (lead) lead.status = newStatus;
-        persistStaticDB();
-        refreshDashboard();
-        return;
-    }
+    // Note: event.target might not be available if called programmatically, but usually is from onchange
+    // If we want visual feedback on the select element specifically without full refresh, we could keep it,
+    // but refreshDashboard() is safer to ensure consistency.
     try {
-        const response = await fetch(`${API_BASE}/leads/status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            },
-            body: JSON.stringify({ id, status: newStatus })
-        });
-        await handleResponse(response);
+        await DataService.updateItem('leads', id, { status: newStatus });
 
-        if (response.ok) {
-            // Visual feedback
+        // Visual feedback
+        if (event && event.target) {
             const select = event.target;
             select.style.backgroundColor = '#d4edda';
             setTimeout(() => select.style.backgroundColor = '', 800);
         } else {
-            throw new Error('Server error');
+            showNotification('Status updated', 'success');
         }
     } catch (error) {
         alert('Error updating status: ' + error.message);
@@ -656,29 +719,12 @@ window.updateLeadStatus = async (id, newStatus) => {
 };
 
 window.deleteLead = async (id) => {
-    if (isStaticMode()) {
-        if (!confirm('Are you sure you want to delete this inquiry? (Static Mode)')) return;
-        const db = await getStaticDB();
-        db.leads = db.leads.filter(l => l.id !== id && l.id != id);
-        persistStaticDB();
-        refreshDashboard();
-        return;
-    }
     if (!confirm('Are you sure you want to delete this inquiry? This action cannot be undone.')) return;
 
     try {
-        const response = await fetch(`${API_BASE}/leads/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-
-        if (response.ok) {
-            showNotification('✅ Inquiry deleted successfully!', 'success');
-            refreshDashboard();
-        } else {
-            throw new Error('Server error');
-        }
+        await DataService.deleteItem('leads', id);
+        showNotification('✅ Inquiry deleted successfully!', 'success');
+        refreshDashboard();
     } catch (error) {
         alert('❌ Error deleting inquiry: ' + error.message);
     }
@@ -726,50 +772,43 @@ window.saveSettings = async function () {
 };
 
 window.changePassword = async function () {
-    const current = document.getElementById('currentPassword').value;
     const newPass = document.getElementById('newPassword').value;
     const confirmPass = document.getElementById('confirmNewPassword').value;
 
-    if (!current || !newPass || !confirmPass) {
-        alert("Please fill in all password fields.");
+    if (!newPass || !confirmPass) {
+        showNotification("Please fill in all password fields.", 'error');
+        return;
+    }
+
+    if (newPass.length < 6) {
+        showNotification("Password should be at least 6 characters.", 'error');
         return;
     }
 
     if (newPass !== confirmPass) {
-        alert("New passwords do not match.");
+        showNotification("New passwords do not match.", 'error');
         return;
     }
 
-    if (isStaticMode()) {
-        const db = await getStaticDB();
-        // Since we don't really have the old password hash to compare in client-side static mode easily without exposing it,
-        // we will simulate a check or just allow override if aware of 'admin' / 'admin123'. 
-        // For security simulation:
-        alert("✅ Static Mode: Password updated in local browser storage only. Remember to update your source code/JSON for permanent changes.");
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            },
-            body: JSON.stringify({ currentPassword: current, newPassword: newPass })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-            alert("✅ Password changed successfully!");
+    // Firebase Update
+    if (typeof auth !== 'undefined' && auth.currentUser) {
+        try {
+            await auth.currentUser.updatePassword(newPass);
+            showNotification("✅ Password updated successfully!", 'success');
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmNewPassword').value = '';
-        } else {
-            alert("Error: " + data.message);
+        } catch (error) {
+            console.error(error);
+            if (error.code === 'auth/requires-recent-login') {
+                showNotification("Please logout and login again to change password.", 'error');
+            } else {
+                showNotification("Error: " + error.message, 'error');
+            }
         }
-    } catch (e) {
-        alert("Connection error: " + e.message);
+    } else {
+        // Fallback or No Auth
+        showNotification("Error: You are not logged in via Firebase.", 'error');
     }
 };
 
@@ -1057,11 +1096,7 @@ window.closeCategoryModal = () => {
 
 async function loadWarranties() {
     try {
-        const response = await fetch(`${API_BASE}/warranties`, {
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-        const warranties = await response.json();
+        const warranties = await DataService.getCollection('warranties');
         renderWarranties(warranties);
     } catch (error) {
         console.error('Error loading warranties:', error);
@@ -1126,55 +1161,21 @@ window.filterWarranties = function (status) {
 };
 
 window.updateWarrantyStatus = async (id, newStatus) => {
-    if (isStaticMode()) {
-        const db = await getStaticDB();
-        const item = db.warranties.find(w => w.id === id || w.id == id);
-        if (item) item.status = newStatus;
-        persistStaticDB();
-        refreshDashboard();
-        return;
-    }
     try {
-        const response = await fetch(`${API_BASE}/warranties/status`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            },
-            body: JSON.stringify({ id, status: newStatus })
-        });
-        await handleResponse(response);
-
-        if (response.ok) {
-            showNotification('Status updated successfully!', 'success');
-            refreshDashboard();
-        }
+        await DataService.updateItem('warranties', id, { status: newStatus });
+        showNotification('Status updated!', 'success');
+        refreshDashboard();
     } catch (error) {
         showNotification('Error updating status: ' + error.message, 'error');
     }
 }
 
 window.deleteWarranty = async (id) => {
-    if (isStaticMode()) {
-        if (!confirm('Are you sure you want to delete this warranty request? (Static Mode)')) return;
-        const db = await getStaticDB();
-        db.warranties = db.warranties.filter(w => w.id !== id && w.id != id);
-        persistStaticDB();
-        refreshDashboard();
-        return;
-    }
     if (!confirm('Delete this warranty request?')) return;
-
     try {
-        const response = await fetch(`${API_BASE}/warranties/${id}`, {
-            method: 'DELETE',
-            headers: getAuthHeader()
-        });
-        await handleResponse(response);
-        if (response.ok) {
-            showNotification('Request deleted!', 'success');
-            refreshDashboard();
-        }
+        await DataService.deleteItem('warranties', id);
+        showNotification('Request deleted!', 'success');
+        refreshDashboard();
     } catch (er) {
         showNotification('Error: ' + er.message, 'error');
     }
