@@ -151,22 +151,12 @@ ul {
     color: #ff6b6b;
     cursor: pointer;
     font-size: 1rem;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
-}
-
-.logout-btn {
-    background: none;
-    border: none;
-    color: #ff6b6b;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 10px;
-    /* Easier touch target */
+    transition: all 0.3s ease;
 }
 
 /* Main Content */
