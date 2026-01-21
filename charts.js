@@ -115,10 +115,11 @@ window.initializeCharts = function initializeCharts() {
     // Product Categories Chart (Bar)
     const categoriesCtx = document.getElementById('categoriesChart');
     if (categoriesCtx) {
-        fetch(`${API_BASE}/dashboard`)
-            .then(res => res.json())
-            .then(data => {
-                const products = data.products || [];
+        // Use products from refreshDashboard if available, or fetch directly
+        const renderCategoriesChart = async () => {
+            try {
+                // Access DataService from admin.js scope
+                const products = window.allProducts || await (typeof DataService !== 'undefined' ? DataService.getCollection('products') : []);
                 const categoryCount = {};
 
                 products.forEach(p => {
@@ -163,7 +164,12 @@ window.initializeCharts = function initializeCharts() {
                         }
                     }
                 });
-            });
+            } catch (err) {
+                console.error('Error rendering categories chart:', err);
+            }
+        };
+
+        renderCategoriesChart();
     }
 }
 

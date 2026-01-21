@@ -143,7 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- EXPORT FUNCTIONS ---
     window.exportProductsToCSV = async () => {
         try {
+            showLoading('Exporting products...');
             const products = await DataService.getCollection('products');
+            hideLoading();
+
             if (!products.length) return showNotification('No products to export', 'error');
 
             const headers = ['ID', 'Name', 'Category', 'Series', 'HP', 'Price', 'Stock'];
@@ -152,14 +155,19 @@ document.addEventListener('DOMContentLoaded', () => {
             ].map(e => `"${e || ''}"`).join(',')); // Escape quotes
 
             downloadCSV([headers.join(','), ...rows].join('\n'), 'products_catalog.csv');
+            showNotification('✅ Products exported successfully!', 'success');
         } catch (e) {
+            hideLoading();
             showNotification('Export failed: ' + e.message, 'error');
         }
     };
 
     window.exportLeadsToCSV = async () => {
         try {
+            showLoading('Exporting leads...');
             const leads = await DataService.getCollection('leads');
+            hideLoading();
+
             if (!leads.length) return showNotification('No leads to export', 'error');
 
             const headers = ['Date', 'Client', 'Interest', 'Email', 'Phone', 'Status'];
@@ -168,7 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
             ].map(e => `"${e || ''}"`).join(','));
 
             downloadCSV([headers.join(','), ...rows].join('\n'), 'customer_inquiries.csv');
+            showNotification('✅ Leads exported successfully!', 'success');
         } catch (e) {
+            hideLoading();
             showNotification('Export failed: ' + e.message, 'error');
         }
     };
@@ -187,11 +197,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- LOADING SPINNER HELPERS ---
+    window.showLoading = function (message = 'Loading...') {
+        // Remove existing if any
+        hideLoading();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+        `;
+
+        overlay.innerHTML = `
+            <div style="text-align: center;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <p style="font-size: 1.2rem; font-weight: 600;">${message}</p>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+    };
+
+    window.hideLoading = function () {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.remove();
+    };
+
     // Mobile Sidebar Toggle
     setupMobileSidebar();
 
     // Logout Handler
     setupLogout();
+
+    // Initial Data Load
+    refreshDashboard();
 
     // View Switching
     setupViewSwitching();
@@ -386,8 +436,23 @@ function renderProducts(products) {
     const container = document.getElementById('productCatalogContainer');
     if (!container) return;
 
+    // Cache products globally for charts
+    if (Array.isArray(products) && products.length > 0) {
+        window.allProducts = products;
+    }
+
     if (!products || products.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding:20px; color: #888;">No Products Found</p>';
+        container.innerHTML = `
+            <div style="text-align:center; padding:40px; color: #666;">
+                <i class="fa-solid fa-box-open" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
+                <p>No products found in the database.</p>
+                <p style="font-size: 0.9rem; margin-top: 10px;">
+                    Is this your first time? 
+                    <a href="#" onclick="document.querySelector('[data-view=\'settings\']').click()" style="color: #0077b6; text-decoration: underline;">
+                        Go to Settings > Data Migration
+                    </a> to import your initial data.
+                </p>
+            </div>`;
         return;
     }
 
@@ -402,8 +467,30 @@ function renderProducts(products) {
     // Clear Container
     container.innerHTML = '';
 
+    // Define custom category order
+    const categoryOrder = [
+        'Self-Priming Monoblock Pumps',
+        'Centrifugal Monoblock Pumps',
+        'Supersuction Pumps',
+        'Openwell Submersible Pumps',
+        'Borewell Submersible Pumps',
+        'Shallow Well Pumps',
+        'Mini Booster Pumps'
+    ];
+
+    // Sort categories by custom order
+    const sortedCategories = Object.keys(grouped).sort((a, b) => {
+        const indexA = categoryOrder.indexOf(a);
+        const indexB = categoryOrder.indexOf(b);
+        // If category not in order list, put at end
+        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
     // Render each category group
-    Object.keys(grouped).sort().forEach(category => {
+    sortedCategories.forEach(category => {
         const categoryProducts = grouped[category];
 
         // Create Section
@@ -624,7 +711,7 @@ window.editProduct = async (id) => {
         if (modal) modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     } catch (error) {
-        alert('Error loading product: ' + error.message);
+        showNotification('Error loading product: ' + error.message, 'error');
     }
 };
 
@@ -672,17 +759,18 @@ async function saveProduct(formData) {
 
         if (productId) {
             await DataService.updateItem('products', productData.id, productData);
-            alert('✅ Product updated successfully!');
+            showNotification('✅ Product updated successfully!', 'success');
         } else {
             await DataService.addItem('products', productData);
-            alert('✅ Product added successfully!');
+            showNotification('✅ Product added successfully!', 'success');
         }
 
         closeModal();
         refreshDashboard();
+        loadCategories(); // Update category counts
 
     } catch (error) {
-        alert('Error saving product: ' + error.message);
+        showNotification('Error saving product: ' + error.message, 'error');
         console.error(error);
     }
 }
@@ -691,10 +779,11 @@ window.deleteProduct = async (id) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
     try {
         await DataService.deleteItem('products', id);
-        alert('✅ Product deleted successfully!');
+        showNotification('✅ Product deleted successfully!', 'success');
         refreshDashboard();
+        loadCategories(); // Update category counts
     } catch (error) {
-        alert('Error deleting product: ' + error.message);
+        showNotification('Error deleting product: ' + error.message, 'error');
     }
 };
 
@@ -747,27 +836,23 @@ window.saveSettings = async function () {
     };
 
     try {
-        // Try to update existing, or create if not exists
-        // Since DataService.updateItem might fail if doc doesn't exist in Firestore,
-        // and addItem might fail if ID exists.
-        // Best approach for singleton: Try set (which addItem does with ID)
         await DataService.addItem('settings', settings);
 
-        // Also save to localStorage for immediate sync/offline
+        // Local Backup
         localStorage.setItem('varshini_settings', JSON.stringify(settings));
 
-        const btn = event.target || document.querySelector('.settings-header .btn-primary');
+        showNotification('✅ Settings saved successfully!', 'success');
+
+        // Visual Button Feedback
+        const btn = event?.target || document.querySelector('.settings-header .btn-primary');
         if (btn) {
             const original = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
-            setTimeout(() => {
-                btn.innerHTML = original;
-            }, 2000);
+            setTimeout(() => btn.innerHTML = original, 2000);
         }
 
-        alert('✅ Settings saved! Note: SEO changes require manual HTML updates.');
     } catch (e) {
-        alert('Error saving settings: ' + e.message);
+        showNotification('Error saving settings: ' + e.message, 'error');
     }
 };
 
@@ -1049,6 +1134,9 @@ function renderCategories(categories) {
             <td data-label="Name">${c.name}</td>
             <td data-label="Count">${c.count || 0} Products</td>
             <td data-label="Actions">
+                <button class="action-btn" onclick="openEditCategoryModal(${c.id})" title="Edit Category" style="background:#ffc107; color:#000; margin-right:5px;">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
                 <button class="action-btn delete" onclick="deleteCategory(${c.id})" title="Delete Category">
                     <i class="fa-solid fa-trash"></i>
                 </button>
@@ -1188,36 +1276,71 @@ loadWarranties();
 
 // --- CATEGORY ACTIONS ---
 
+// --- CATEGORY ACTIONS ---
+
 const addCategoryForm = document.getElementById('addCategoryForm');
 if (addCategoryForm) {
     addCategoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = addCategoryForm.name.value.trim();
+        const id = addCategoryForm.id.value; // Support Edit
+
         if (!name) return;
 
         try {
-            const categories = await DataService.getCollection('categories');
-            if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                alert('Category already exists');
-                return;
+            if (id) {
+                // Update
+                await DataService.updateItem('categories', id, { name });
+                showNotification('✅ Category updated!', 'success');
+            } else {
+                // Create
+                const categories = await DataService.getCollection('categories');
+                if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                    showNotification('Category already exists', 'error');
+                    return;
+                }
+                await DataService.addItem('categories', { id: Date.now(), name });
+                showNotification('✅ Category added!', 'success');
             }
 
-            await DataService.addItem('categories', { id: Date.now(), name });
-            alert('✅ Category added successfully!');
             closeCategoryModal();
             loadCategories();
         } catch (error) {
-            alert('Error adding category: ' + error.message);
+            showNotification('Error saving category: ' + error.message, 'error');
         }
     });
+
+    // Reset ID on close
 }
 
-function closeCategoryModal() {
+window.closeCategoryModal = function () {
     const modal = document.getElementById('addCategoryModal');
     const form = document.getElementById('addCategoryForm');
     if (modal) modal.style.display = 'none';
-    if (form) form.reset();
-}
+    if (form) {
+        form.reset();
+        form.id.value = ''; // Clear ID for next time (switch back to Add mode)
+    }
+    const title = document.querySelector('#addCategoryModal h3');
+    if (title) title.textContent = 'Add New Category';
+};
+
+window.openEditCategoryModal = async (id) => {
+    const categories = await DataService.getCollection('categories');
+    const cat = categories.find(c => c.id == id);
+    if (!cat) return;
+
+    const modal = document.getElementById('addCategoryModal');
+    const form = document.getElementById('addCategoryForm');
+    const title = document.querySelector('#addCategoryModal h3');
+
+    if (form) {
+        form.name.value = cat.name;
+        form.id.value = cat.id;
+    }
+    if (title) title.textContent = 'Edit Category';
+    if (modal) modal.style.display = 'flex';
+};
 
 window.deleteCategory = async (id) => {
     if (!confirm('Delete this category? This cannot be undone.')) return;
@@ -1230,55 +1353,62 @@ window.deleteCategory = async (id) => {
         if (!category) return;
 
         if (products.some(p => p.category === category.name)) {
-            alert('Cannot delete category with associated products.');
+            showNotification('Cannot delete: Category has products.', 'error');
             return;
         }
 
         await DataService.deleteItem('categories', id);
-        alert('✅ Category deleted!');
+        showNotification('✅ Category deleted!', 'success');
         loadCategories();
     } catch (error) {
-        alert('Error deleting category: ' + error.message);
+        showNotification('Error deleting category: ' + error.message, 'error');
     }
 };
 
 // --- MIGRATION UTILITY ---
+// --- MIGRATION UTILITY ---
 window.importStaticToFirebase = async () => {
-    if (!confirm('This will upload data from db.json to Firebase. Continue?')) return;
+    if (!confirm('This will upload data from db.json to your live Firestore Database. Continue?')) return;
+
+    showLoading('Migrating data to Firebase... Please wait.');
 
     try {
         const res = await fetch('db.json');
-        if (!res.ok) throw new Error("Could not find db.json");
+        if (!res.ok) throw new Error("Could not find db.json file in root.");
         const data = await res.json();
 
         let count = 0;
 
-        // Products
+        // Import Products (check by ID only)
         if (data.products) {
             const existing = await DataService.getCollection('products');
             for (const p of data.products) {
-                if (!existing.find(e => e.id == p.id)) {
-                    await DataService.addItem('products', { ...p, id: p.id || Date.now() });
+                const itemId = p.id || Date.now() + Math.random();
+                const exists = existing.find(e => e.id == itemId);
+                if (!exists) {
+                    await DataService.addItem('products', { ...p, id: itemId });
                     count++;
                 }
             }
         }
 
-        // Categories
+        // Import Categories (check by name)
         if (data.categories) {
             const existing = await DataService.getCollection('categories');
             for (const c of data.categories) {
-                if (!existing.find(e => e.name === c.name)) {
-                    await DataService.addItem('categories', { ...c, id: c.id || Date.now() });
+                const itemId = c.id || Date.now() + Math.random();
+                const exists = existing.find(e => e.name === c.name);
+                if (!exists) {
+                    await DataService.addItem('categories', { ...c, id: itemId });
                     count++;
                 }
             }
         }
 
-        // Leads
+        // Import Leads (always import, they're timestamped)
         if (data.leads) {
             for (const l of data.leads) {
-                await DataService.addItem('leads', { ...l, id: l.id || Date.now() });
+                await DataService.addItem('leads', { ...l, id: l.id || Date.now() + Math.random() });
                 count++;
             }
         }
@@ -1289,11 +1419,17 @@ window.importStaticToFirebase = async () => {
             count++;
         }
 
-        alert(`✅ Migration Complete! Imported ${count} items to Firebase.`);
-        refreshDashboard();
+        hideLoading();
+        showNotification(`✅ Migration Complete! Imported ${count} items to Firebase.`, 'success');
+
+        // Force reload of all data
+        await refreshDashboard();
+        // Also reload categories helper
+        await loadCategories();
 
     } catch (e) {
-        alert('Migration Failed: ' + e.message);
+        hideLoading();
+        showNotification('Migration Failed: ' + e.message, 'error');
         console.error(e);
     }
 };
