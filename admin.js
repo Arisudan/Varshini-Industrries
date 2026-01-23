@@ -316,6 +316,9 @@ function setupViewSwitching() {
                 if (targetView === 'settings') {
                     loadSettings();
                 }
+                if (targetView === 'categories') {
+                    loadCategories();
+                }
                 if (targetView === 'dashboard' && typeof refreshCharts === 'function') {
                     setTimeout(() => refreshCharts(), 100);
                 }
@@ -940,7 +943,7 @@ window.editProduct = async (id) => {
 async function saveProduct(formData) {
     try {
         const id = formData.get('id');
-        
+
         // --- VALIDATION ---
         const name = formData.get('name');
         const priceRaw = formData.get('price');
@@ -948,9 +951,9 @@ async function saveProduct(formData) {
         const category = formData.get('category');
 
         if (!name || (!category && document.getElementById('productCategory').value === '')) {
-             if (document.getElementById('productCategory').value === '') alert('Please select a Category.');
-             else alert('Please fill in all required fields.');
-             return;
+            if (document.getElementById('productCategory').value === '') alert('Please select a Category.');
+            else alert('Please fill in all required fields.');
+            return;
         }
 
         if (!stock) {
@@ -978,9 +981,9 @@ async function saveProduct(formData) {
         closeModal();
         hideLoading();
         refreshDashboard();
-        
+
         // Reload Categories just in case a new category was introduced
-        if (typeof loadCategories === 'function') loadCategories(); 
+        if (typeof loadCategories === 'function') loadCategories();
         else if (typeof refreshDashboard === 'function') setTimeout(refreshDashboard, 500);
 
     } catch (error) {
@@ -1314,22 +1317,14 @@ window.searchLeads = function (query) {
 };
 
 // --- CATEGORY MANAGEMENT ---
-
 async function loadCategories() {
     try {
-        const [categories, products] = await Promise.all([
-            DataService.getCollection('categories'),
-            DataService.getCollection('products')
-        ]);
+        // The /api/categories endpoint already returns categories with counts
+        // No need to fetch products separately
+        const categories = await DataService.getCollection('categories');
 
-        // Calculate Counts locally
-        const categoriesWithCounts = categories.map(c => ({
-            ...c,
-            count: products.filter(p => p.category === c.name).length
-        }));
-
-        renderCategories(categoriesWithCounts);
-        populateCategoryDropdown(categoriesWithCounts);
+        renderCategories(categories);
+        populateCategoryDropdown(categories);
     } catch (error) {
         console.error('Error loading categories:', error);
     }
@@ -1339,20 +1334,17 @@ function renderCategories(categories) {
     const tbody = document.getElementById('categoriesTableBody');
     if (!tbody) return;
 
-    if (categories.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No categories found</td></tr>';
+    if (!categories || categories.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">No categories found in database.</td></tr>';
         return;
     }
 
     tbody.innerHTML = categories.map(c => `
         <tr>
-            <td data-label="Name">${c.name}</td>
-            <td data-label="Count">${c.count || 0} Products</td>
+            <td data-label="Name" style="font-weight:600; color:#0A2540;">${c.name}</td>
+            <td data-label="Count"><span class="status" style="background:#eaf4ff; color:#0077b6;">${c.count || 0} Products</span></td>
             <td data-label="Actions">
-                <button class="action-btn" onclick="openEditCategoryModal(${c.id})" title="Edit Category" style="background:#ffc107; color:#000; margin-right:5px;">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-                <button class="action-btn delete" onclick="deleteCategory(${c.id})" title="Delete Category">
+                <button class="action-btn delete" onclick="deleteCategory(${c.id})" title="Delete Category (Only if empty)">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
@@ -1362,20 +1354,28 @@ function renderCategories(categories) {
 
 function populateCategoryDropdown(categories) {
     const select = document.getElementById('productCategory');
-    if (!select) return;
+    const filter = document.getElementById('prodCatFilter');
 
-    // Keep first option (Select Category)
-    const firstOption = select.options[0];
-    select.innerHTML = '';
-    select.appendChild(firstOption);
+    // Create Options HTML
+    const optionsHtml = categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
 
-    categories.forEach(c => {
-        const option = document.createElement('option');
-        option.value = c.name;
-        option.textContent = c.name;
-        select.appendChild(option);
-    });
+    // 1. Update Product Modal Dropdown
+    if (select) {
+        select.innerHTML = '<option value="">Select Category</option>' + optionsHtml;
+    }
+
+    // 2. Update Product Filter Dropdown (in Unified Product View)
+    if (filter) {
+        // Preserve current selection if possible
+        const current = filter.value;
+        filter.innerHTML = '<option value="">All Categories</option>' + optionsHtml;
+        filter.value = current;
+    }
 }
+
+// -------------------------------------------------------------
+// CATEGORY ACTIONS (Add/Delete)
+// -------------------------------------------------------------
 
 window.openAddCategoryModal = () => {
     const modal = document.getElementById('addCategoryModal');
@@ -1389,10 +1389,47 @@ window.closeCategoryModal = () => {
     if (form) form.reset();
 };
 
-// Add Category Form Submit
-// Duplicate category logic removed. Implemented at the end of file.
+// Form Handler - Add Category
+const catForm = document.getElementById('addCategoryForm');
+if (catForm) {
+    // Remove existing listeners to avoid duplicates if this file re-runs
+    catForm.replaceWith(catForm.cloneNode(true));
+    // Re-select after clone
+    document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const name = form.name.value.trim();
 
-// Duplicate deleteCategory logic removed.
+        if (!name) { alert("Category name is required"); return; }
+
+        showLoading('Adding Category...');
+        try {
+            await DataService.addItem('categories', { name });
+            showNotification('✅ Category added successfully!', 'success');
+            closeCategoryModal();
+            loadCategories();
+        } catch (err) {
+            alert(err.message);
+        }
+        hideLoading();
+    });
+}
+
+
+window.deleteCategory = async (id) => {
+    if (!confirm("Are you sure you want to delete this category?")) return;
+
+    showLoading('Deleting...');
+    try {
+        await DataService.deleteItem('categories', id);
+        showNotification('Category deleted', 'success');
+        loadCategories();
+    } catch (err) {
+        // Server will return 400 if products exist in category, so message helps
+        alert("Cannot delete: " + (err.message || "Ensure no products are in this category first."));
+    }
+    hideLoading();
+};
 
 // Load categories on start
 // --- WARRANTY REQUESTS ---

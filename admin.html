@@ -200,6 +200,31 @@
             </section>
         </div>
 
+        <!-- VIEW: CATEGORIES (Restored) -->
+        <div id="view-categories" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Manage Categories</h3>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()"><i class="fa-solid fa-plus"></i>
+                        Add Category</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Products Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
         <!-- VIEW: LEADS (Refactored) -->
         <div id="view-leads" class="admin-view" style="display: none;">
             <section class="panel-section">
