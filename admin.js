@@ -431,167 +431,390 @@ function getContactedCount() {
     return window.allLeads.filter(lead => lead.status === 'Contacted' || lead.status === 'Sold').length;
 }
 
-function renderProducts(products) {
-    const container = document.getElementById('productCatalogContainer');
-    if (!container) return;
+// --- PRODUCT MANAGER (Pagination, Sort, Bulk) ---
+const ProductManager = {
+    data: [],
+    page: 1,
+    perPage: 10,
+    filters: { search: '', category: '', stock: '' },
+    sort: { col: 'id', asc: false },
+    selected: new Set(),
 
-    // Cache products globally for charts
-    if (Array.isArray(products) && products.length > 0) {
-        window.allProducts = products;
-    }
+    init(products) {
+        this.data = products || [];
+        // Preserve selected if possible, or clear? Clear is safer on reload.
+        this.populateFilters();
+        this.render();
+    },
 
-    if (!products || products.length === 0) {
-        container.innerHTML = `
-            <div style="text-align:center; padding:40px; color: #666;">
-                <i class="fa-solid fa-box-open" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
-                <p>No products found in the database.</p>
-                <p style="font-size: 0.9rem; margin-top: 10px;">
-                    Is this your first time? 
-                    <a href="#" onclick="document.querySelector('[data-view=\'settings\']').click()" style="color: #0077b6; text-decoration: underline;">
-                        Go to Settings > Data Migration
-                    </a> to import your initial data.
-                </p>
-            </div>`;
-        return;
-    }
+    populateFilters() {
+        const cats = [...new Set(this.data.map(p => p.category).filter(Boolean))].sort();
+        const select = document.getElementById('prodCatFilter');
+        if (select && select.options.length <= 1) { // Only populate if empty
+            select.innerHTML = '<option value="">All Categories</option>' +
+                cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+    },
 
-    // Group Products by Category
-    const grouped = {};
-    products.forEach(p => {
-        const cat = p.category || 'Uncategorized';
-        if (!grouped[cat]) grouped[cat] = [];
-        grouped[cat].push(p);
-    });
+    getFilteredAndSorted() {
+        let filtered = this.data.filter(p => {
+            const searchLower = this.filters.search.toLowerCase();
+            const matchSearch = !this.filters.search ||
+                (p.name && p.name.toLowerCase().includes(searchLower)) ||
+                (p.series && p.series.toLowerCase().includes(searchLower));
+            const matchCat = !this.filters.category || p.category === this.filters.category;
+            const matchStock = !this.filters.stock || (p.stock === this.filters.stock);
+            return matchSearch && matchCat && matchStock;
+        });
 
-    // Clear Container
-    container.innerHTML = '';
+        const { col, asc } = this.sort;
+        filtered.sort((a, b) => {
+            let valA = a[col] || '';
+            let valB = b[col] || '';
 
-    // Define custom category order
-    const categoryOrder = [
-        'Self-Priming Monoblock Pumps',
-        'Centrifugal Monoblock Pumps',
-        'Supersuction Pumps',
-        'Openwell Submersible Pumps',
-        'Borewell Submersible Pumps',
-        'Shallow Well Pumps',
-        'Mini Booster Pumps'
-    ];
+            if (col === 'price') {
+                // Clean price string "₹ 18,500" -> 18500
+                valA = parseFloat(String(valA).replace(/[^0-9.]/g, '')) || 0;
+                valB = parseFloat(String(valB).replace(/[^0-9.]/g, '')) || 0;
+            } else if (col === 'id') {
+                valA = parseInt(valA) || 0;
+                valB = parseInt(valB) || 0;
+            } else {
+                valA = String(valA).toLowerCase();
+                valB = String(valB).toLowerCase();
+            }
+            if (valA < valB) return asc ? -1 : 1;
+            if (valA > valB) return asc ? 1 : -1;
+            return 0;
+        });
 
-    // Sort categories by custom order
-    const sortedCategories = Object.keys(grouped).sort((a, b) => {
-        const indexA = categoryOrder.indexOf(a);
-        const indexB = categoryOrder.indexOf(b);
-        // If category not in order list, put at end
-        if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-    });
+        return filtered;
+    },
 
-    // Render each category group
-    sortedCategories.forEach(category => {
-        const categoryProducts = grouped[category];
+    render() {
+        // Read Inputs (Reactive)
+        this.filters.search = document.getElementById('prodSearch')?.value || '';
+        this.filters.category = document.getElementById('prodCatFilter')?.value || '';
+        this.filters.stock = document.getElementById('prodStockFilter')?.value || '';
 
-        // Create Section
-        const section = document.createElement('div');
-        section.style.marginBottom = '30px';
+        const processed = this.getFilteredAndSorted();
 
-        // Header
-        const header = document.createElement('h3');
-        header.style.color = '#0077b6';
-        header.style.borderBottom = '2px solid #caf0f8';
-        header.style.paddingBottom = '10px';
-        header.style.marginBottom = '15px';
-        header.innerHTML = `<i class="fa-solid fa-layer-group"></i> ${category} <span style="font-size: 0.8rem; color: #666; font-weight: normal;">(${categoryProducts.length})</span>`;
-        section.appendChild(header);
+        // Pagination
+        const total = processed.length;
+        this.totalPages = Math.ceil(total / this.perPage) || 1;
+        if (this.page > this.totalPages) this.page = this.totalPages;
+        if (this.page < 1) this.page = 1;
 
-        // Table Wrapper
-        const tableResp = document.createElement('div');
-        tableResp.className = 'table-responsive';
+        const start = (this.page - 1) * this.perPage;
+        const end = start + this.perPage;
+        const pageData = processed.slice(start, end);
 
-        // Table HTML
-        const rows = categoryProducts.map(p => {
-            const stockClass = p.stock?.toLowerCase().includes('in stock') ? 'in-stock' :
-                p.stock?.toLowerCase().includes('low') ? 'low-stock' : 'out-stock';
+        // Render Rows
+        const tbody = document.getElementById('productTableBody');
+        if (tbody) {
+            if (total === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products found</td></tr>';
+            } else {
+                tbody.innerHTML = pageData.map(p => this.createRow(p)).join('');
+            }
+        }
 
-            return `
-            <tr>
-                <td data-label="Image"><img src="${p.image || 'assets/placeholder.png'}" alt="${p.name}" class="thumb" 
-                     onerror="this.src='https://via.placeholder.com/50?text=No+Image'" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;"></td>
-                <td data-label="Model"><strong>${p.name}</strong><br><small style="color: #666;">${p.series || 'N/A'}</small></td>
-                <td data-label="HP/Spec">${p.hp || 'N/A'}</td>
-                <td data-label="Price" style="font-weight: 600;">${p.price || 'N/A'}</td>
-                <td data-label="Stock"><span class="status ${stockClass}">${p.stock || 'Unknown'}</span></td>
-                <td data-label="Actions">
-                    <button class="action-btn edit" onclick="editProduct(${p.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                    <button class="action-btn delete" onclick="deleteProduct(${p.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        this.renderPagination(total);
+        this.updateBulkUI();
+    },
+
+    createRow(p) {
+        const isSel = this.selected.has(String(p.id));
+        const stockClass = p.stock?.includes('In') ? 'in-stock' : (p.stock?.includes('Low') ? 'low-stock' : 'out-stock');
+        return `
+            <tr style="background: ${isSel ? '#f0f9ff' : 'white'}">
+                <td><input type="checkbox" onchange="ProductManager.toggleOne('${p.id}')" ${isSel ? 'checked' : ''}></td>
+                <td><img src="${p.image}" class="thumb" style="width:40px;height:40px;object-fit:cover;border-radius:4px;" onerror="this.src='assets/placeholder.png'"></td>
+                <td style="font-weight:600">${p.name}<div style="font-size:0.8em;color:#666">${p.series}</div></td>
+                <td>${p.category}</td>
+                <td>${p.price}</td>
+                <td><span class="status ${stockClass}" style="font-size:0.8rem; padding:2px 6px;">${p.stock}</span></td>
+                <td>
+                    <button class="action-btn edit" onclick="editProduct(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                    <button class="action-btn delete" onclick="deleteProduct(${p.id})"><i class="fa-solid fa-trash"></i></button>
                 </td>
             </tr>
-            `;
-        }).join('');
-
-        tableResp.innerHTML = `
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width: 80px;">Image</th>
-                        <th style="width: 25%;">Model Name</th>
-                        <th>HP / Spec</th>
-                        <th>Price (INR)</th>
-                        <th>Stock Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
         `;
+    },
 
-        section.appendChild(tableResp);
-        container.appendChild(section);
-    });
-}
+    setSort(col) {
+        if (this.sort.col === col) this.sort.asc = !this.sort.asc;
+        else { this.sort.col = col; this.sort.asc = true; }
+        this.render();
+    },
 
-function renderLeads(leads) {
-    const tbody = document.getElementById('leadsTableBody');
-    if (!tbody) return;
+    toggleAll(checkbox) {
+        // Toggle all currently filtered items
+        const processed = this.getFilteredAndSorted();
+        processed.forEach(p => {
+            if (checkbox.checked) this.selected.add(String(p.id));
+            else this.selected.delete(String(p.id));
+        });
+        this.render();
+    },
 
-    // Cache leads for filtering/search
-    if (Array.isArray(leads) && leads.length > 0) {
-        window.allLeads = leads;
+    toggleOne(id) {
+        id = String(id);
+        if (this.selected.has(id)) this.selected.delete(id);
+        else this.selected.add(id);
+        this.render();
+    },
+
+    updateBulkUI() {
+        const count = document.getElementById('prodSelectedCount');
+        const box = document.getElementById('prodBulkActions');
+        if (count) count.innerText = this.selected.size;
+        if (box) box.style.display = this.selected.size > 0 ? 'flex' : 'none';
+    },
+
+    async deleteSelected() {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete ${this.selected.size} products?`)) return;
+        showLoading('Deleting...');
+        const ids = Array.from(this.selected);
+        for (let id of ids) {
+            try { await DataService.deleteItem('products', id); } catch (e) { }
+        }
+        this.selected.clear();
+        hideLoading();
+        refreshDashboard();
+    },
+
+    changePage(delta) {
+        this.page += delta;
+        this.render();
+    },
+
+    renderPagination(total) {
+        const div = document.getElementById('prodPagination');
+        if (!div) return;
+        if (total === 0) { div.innerHTML = ''; return; }
+
+        const start = (this.page - 1) * this.perPage + 1;
+        const end = Math.min(this.page * this.perPage, total);
+
+        div.innerHTML = `
+             <div style="font-size:0.9rem; color:#666;">Showing <b>${start}-${end}</b> of <b>${total}</b> items</div>
+             <div style="display:flex; gap:5px;">
+                  <button ${this.page === 1 ? 'disabled' : ''} onclick="ProductManager.changePage(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                  <button disabled style="background:#f5f5f5; color:#333;">Page ${this.page} / ${this.totalPages}</button>
+                  <button ${this.page === this.totalPages ? 'disabled' : ''} onclick="ProductManager.changePage(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+             </div>
+         `;
     }
+};
 
-    if (!leads || leads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color: #888;">No Inquiries Yet</td></tr>';
-        return;
-    }
 
-    tbody.innerHTML = leads.map(l => {
-        const statusClass = l.status?.toLowerCase().includes('new') ? 'pending' :
-            l.status?.toLowerCase().includes('contact') ? 'contacted' : 'sold';
+// --- LEAD MANAGER (Dates, Status, Bulk) ---
+const LeadManager = {
+    data: [],
+    page: 1,
+    perPage: 10,
+    filters: { search: '', status: 'All', start: '', end: '' },
+    sort: { col: 'date', asc: false },
+    selected: new Set(),
+
+    init(leads) {
+        this.data = leads || [];
+        this.render();
+    },
+
+    setFilterStatus(status, btn) {
+        this.filters.status = status;
+        // Update active btn style
+        if (btn) {
+            document.querySelectorAll('#view-leads .filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        this.page = 1;
+        this.render();
+    },
+
+    getFilteredAndSorted() {
+        // Date parsing helper
+        const parseDate = (d) => new Date(d).getTime();
+
+        return this.data.filter(l => {
+            // 1. Status
+            if (this.filters.status !== 'All' && l.status !== this.filters.status) return false;
+
+            // 2. Search
+            if (this.filters.search) {
+                const s = this.filters.search.toLowerCase();
+                // Safe checks
+                const matchString = (l.client || '') + (l.interest || '') + (l.contact?.email || '') + (l.contact?.phone || '');
+                if (!matchString.toLowerCase().includes(s)) return false;
+            }
+
+            // 3. Date Range
+            if (this.filters.start) {
+                if (parseDate(l.date) < parseDate(this.filters.start)) return false;
+            }
+            if (this.filters.end) {
+                // End date set to end of day
+                let e = new Date(this.filters.end);
+                e.setHours(23, 59, 59);
+                if (parseDate(l.date) > e.getTime()) return false;
+            }
+
+            return true;
+        }).sort((a, b) => {
+            // Sort
+            const { col, asc } = this.sort;
+            let valA = a[col];
+            let valB = b[col];
+
+            if (col === 'date') {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+            } else {
+                valA = (valA || '').toString().toLowerCase();
+                valB = (valB || '').toString().toLowerCase();
+            }
+
+            if (valA < valB) return asc ? -1 : 1;
+            if (valA > valB) return asc ? 1 : -1;
+            return 0;
+        });
+    },
+
+    render() {
+        // Read Inputs
+        this.filters.search = document.getElementById('leadSearch')?.value || '';
+        this.filters.start = document.getElementById('leadStartDate')?.value || '';
+        this.filters.end = document.getElementById('leadEndDate')?.value || '';
+
+        const processed = this.getFilteredAndSorted();
+
+        // Paginator logic
+        const total = processed.length;
+        this.totalPages = Math.ceil(total / this.perPage) || 1;
+        if (this.page > this.totalPages) this.page = this.totalPages;
+        if (this.page < 1) this.page = 1;
+
+        const start = (this.page - 1) * this.perPage;
+        const pageData = processed.slice(start, start + this.perPage);
+
+        // Render Body
+        const tbody = document.getElementById('leadsTableBody');
+        if (tbody) {
+            if (total === 0) tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:20px;">No leads match selection</td></tr>';
+            else tbody.innerHTML = pageData.map(l => this.createRow(l)).join('');
+        }
+
+        this.renderPagination(total);
+        this.updateBulkUI();
+    },
+
+    createRow(l) {
+        const isSel = this.selected.has(String(l.id));
+        const statusClass = l.status?.toLowerCase().includes('new') ? 'pending' : (l.status?.toLowerCase().includes('contact') ? 'contacted' : 'sold');
 
         return `
-        <tr>
-            <td data-label="Date">${l.date || 'N/A'}</td>
-            <td data-label="Client">${l.client || 'Unknown'}</td>
-            <td data-label="Interest">${l.interest || 'General Inquiry'}</td>
-            <td data-label="Status">
-                <select class="status-select ${statusClass}" onchange="updateLeadStatus('${l.id}', this.value)">
-                    <option value="New Lead" ${l.status === 'New Lead' ? 'selected' : ''}>New Lead</option>
+        <tr style="background: ${isSel ? '#e3f2fd' : 'white'}">
+            <td><input type="checkbox" onchange="LeadManager.toggleOne('${l.id}')" ${isSel ? 'checked' : ''}></td>
+            <td>${new Date(l.date).toLocaleDateString()}</td>
+            <td><strong>${l.client}</strong><br><small>${l.contact?.phone || ''}</small></td>
+            <td>${l.interest ? l.interest.substring(0, 30) + '...' : ''}</td>
+            <td><span class="status-badge ${statusClass}">${l.status}</span></td>
+            <td>
+                <select onchange="updateLeadStatus('${l.id}', this.value)" style="padding:4px;" class="status-select ${statusClass}">
+                    <option value="New Lead" ${l.status === 'New Lead' ? 'selected' : ''}>New</option>
                     <option value="Contacted" ${l.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
                     <option value="Sold" ${l.status === 'Sold' ? 'selected' : ''}>Sold</option>
                 </select>
+                <button class="action-btn delete" onclick="deleteLead('${l.id}')"><i class="fa-solid fa-trash"></i></button>
             </td>
-            <td data-label="Actions">
-                <button class="action-btn delete" onclick="deleteLead('${l.id}')" title="Delete Inquiry">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </td>
-        </tr>
-        `;
-    }).join('');
-}
+        </tr>`;
+    },
+
+    setSort(col) {
+        if (this.sort.col === col) this.sort.asc = !this.sort.asc;
+        else { this.sort.col = col; this.sort.asc = true; }
+        this.render();
+    },
+
+    toggleAll(checkbox) {
+        const processed = this.getFilteredAndSorted();
+        processed.forEach(l => {
+            if (checkbox.checked) this.selected.add(String(l.id));
+            else this.selected.delete(String(l.id));
+        });
+        this.render();
+    },
+
+    toggleOne(id) {
+        id = String(id);
+        if (this.selected.has(id)) this.selected.delete(id);
+        else this.selected.add(id);
+        this.render();
+    },
+
+    updateBulkUI() {
+        document.getElementById('leadSelectedCount').innerText = this.selected.size;
+        document.getElementById('leadBulkActions').style.display = this.selected.size > 0 ? 'flex' : 'none';
+    },
+
+    changePage(delta) {
+        this.page += delta;
+        this.render();
+    },
+
+    renderPagination(total) {
+        const div = document.getElementById('leadPagination');
+        if (!div) return;
+        if (total === 0) { div.innerHTML = ''; return; }
+
+        const start = (this.page - 1) * this.perPage + 1;
+        const end = Math.min(this.page * this.perPage, total);
+
+        div.innerHTML = `
+             <div style="font-size:0.9rem; color:#666;">Showing <b>${start}-${end}</b> of <b>${total}</b> leads</div>
+             <div style="display:flex; gap:5px;">
+                  <button ${this.page === 1 ? 'disabled' : ''} onclick="LeadManager.changePage(-1)"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                  <button disabled style="background:#f5f5f5; color:#333;">Page ${this.page} / ${this.totalPages}</button>
+                  <button ${this.page === this.totalPages ? 'disabled' : ''} onclick="LeadManager.changePage(1)">Next <i class="fa-solid fa-chevron-right"></i></button>
+             </div>
+         `;
+    },
+
+    async deleteSelected() {
+        if (!confirm(`Delete ${this.selected.size} leads?`)) return;
+        showLoading('Deleting...');
+        const ids = Array.from(this.selected);
+        for (let id of ids) await fetch(`${API_BASE}/leads/${id}`, { method: 'DELETE', headers: DataService.getAuthHeader() });
+        this.selected.clear();
+        hideLoading();
+        refreshDashboard();
+    },
+
+    async updateSelectedStatus() {
+        const status = document.getElementById('leadBulkStatus').value;
+        if (!status) return;
+        showLoading('Updating...');
+        const ids = Array.from(this.selected);
+        // Using existing single status update logic logic or batched if available (we will loop)
+        for (let id of ids) {
+            await fetch(`${API_BASE}/leads/status`, {
+                method: 'POST',
+                headers: { ...DataService.getAuthHeader(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+            });
+        }
+        this.selected.clear();
+        hideLoading();
+        refreshDashboard();
+    }
+};
+
+// --- ALIASES FOR LEGACY CALLS ---
+function renderProducts(p) { ProductManager.init(p); }
+function renderLeads(l) { LeadManager.init(l); }
+
 
 // --- PRODUCT MODAL ---
 
@@ -717,9 +940,30 @@ window.editProduct = async (id) => {
 async function saveProduct(formData) {
     try {
         const id = formData.get('id');
+        
+        // --- VALIDATION ---
+        const name = formData.get('name');
+        const priceRaw = formData.get('price');
+        const stock = formData.get('stock');
+        const category = formData.get('category');
 
-        // Remove 'id' from formData if it's empty to avoid server confusion, though server handles params
-        // Server PUT expects ID in URL. POST generates new ID.
+        if (!name || (!category && document.getElementById('productCategory').value === '')) {
+             if (document.getElementById('productCategory').value === '') alert('Please select a Category.');
+             else alert('Please fill in all required fields.');
+             return;
+        }
+
+        if (!stock) {
+            alert('Please select a stock status.');
+            return;
+        }
+
+        // Validate Price (Allow "18,500" format but must be positive number)
+        const priceNum = parseFloat(String(priceRaw).replace(/,/g, ''));
+        if (priceRaw && (isNaN(priceNum) || priceNum < 0)) {
+            alert('Invalid Price. Please enter a positive number.');
+            return;
+        }
 
         showLoading('Saving Product...');
 
@@ -734,9 +978,9 @@ async function saveProduct(formData) {
         closeModal();
         hideLoading();
         refreshDashboard();
-
+        
         // Reload Categories just in case a new category was introduced
-        if (typeof loadCategories === 'function') loadCategories();
+        if (typeof loadCategories === 'function') loadCategories(); 
         else if (typeof refreshDashboard === 'function') setTimeout(refreshDashboard, 500);
 
     } catch (error) {
