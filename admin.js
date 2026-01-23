@@ -9,102 +9,92 @@ function isStaticMode() {
 
 // --- CENTRAL DATA SERVICE (FIREBASE + Local Fallback) ---
 const DataService = {
-    async getCollection(collectionName) {
-        // 1. Try Firebase Firestore
-        if (typeof db !== 'undefined' && db) {
-            try {
-                const snapshot = await db.collection(collectionName).get();
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (e) {
-                console.error(`Error fetching ${collectionName} from Firebase:`, e);
-                // Fallback to local if error (e.g. permissions or quota)
-            }
-        }
+    getAuthHeader() {
+        const token = localStorage.getItem('auth_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    },
 
-        // 2. Fallback to Local/Static DB
-        const staticData = await this._getStaticDB();
-        return staticData[collectionName] || [];
+    async getCollection(collectionName) {
+        let endpoint = `${API_BASE}/${collectionName}`;
+        if (collectionName === 'products') endpoint = `${API_BASE}/public/products`; // or /dashboard for authenticated
+
+        try {
+            const res = await fetch(endpoint, {
+                headers: this.getAuthHeader()
+            });
+            if (!res.ok) throw new Error(`Failed to fetch ${collectionName}`);
+            return await res.json();
+        } catch (e) {
+            console.error(e);
+            return [];
+        }
     },
 
     async addItem(collectionName, item) {
-        if (typeof db !== 'undefined' && db) {
-            try {
-                // If item has ID, use it, else auto-gen
-                if (item.id) {
-                    await db.collection(collectionName).doc(String(item.id)).set(item);
-                } else {
-                    const docRef = await db.collection(collectionName).add(item);
-                    item.id = docRef.id;
-                }
-                return item;
-            } catch (e) {
-                console.error(`Firestore Write Error (${collectionName}):`, e);
-            }
+        // Prepare Body
+        let body;
+        let headers = this.getAuthHeader();
+
+        if (item instanceof FormData) {
+            // Let browser set Content-Type for FormData
+            body = item;
+        } else {
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(item);
         }
 
-        // Static Fallback
-        const dbStatic = await this._getStaticDB();
-        if (!dbStatic[collectionName]) dbStatic[collectionName] = [];
-        // Ensure ID
-        if (!item.id) item.id = Date.now();
-        dbStatic[collectionName].push(item);
-        this._persistStaticDB(dbStatic);
-        return item;
+        const res = await fetch(`${API_BASE}/${collectionName}`, {
+            method: 'POST',
+            headers: headers,
+            body: body
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || 'Add Failed');
+        }
+        return await res.json();
     },
 
     async updateItem(collectionName, id, updates) {
-        if (typeof db !== 'undefined' && db) {
-            try {
-                await db.collection(collectionName).doc(String(id)).update(updates);
-                return;
-            } catch (e) {
-                // If document doesn't exist, we might need set.
-                console.error("Firestore Update Error:", e);
-            }
+        let endpoint = `${API_BASE}/${collectionName}/${id}`;
+        let method = 'PUT';
+        let body;
+        let headers = this.getAuthHeader();
+
+        // Special handling for Leads Status (Server specific)
+        if (collectionName === 'leads' && updates.status) {
+            endpoint = `${API_BASE}/leads/status`;
+            method = 'POST';
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify({ id, status: updates.status });
+        } else if (updates instanceof FormData) {
+            body = updates;
+        } else {
+            headers['Content-Type'] = 'application/json';
+            body = JSON.stringify(updates);
         }
 
-        // Static Fallback
-        const dbStatic = await this._getStaticDB();
-        if (!dbStatic[collectionName]) return;
-        const idx = dbStatic[collectionName].findIndex(i => i.id == id);
-        if (idx !== -1) {
-            dbStatic[collectionName][idx] = { ...dbStatic[collectionName][idx], ...updates };
-            this._persistStaticDB(dbStatic);
-        }
+        const res = await fetch(endpoint, {
+            method: method,
+            headers: headers,
+            body: body
+        });
+
+        if (!res.ok) throw new Error('Update Failed');
     },
 
     async deleteItem(collectionName, id) {
-        if (typeof db !== 'undefined' && db) {
-            try {
-                await db.collection(collectionName).doc(String(id)).delete();
-                return;
-            } catch (e) { console.error("Firestore Delete Error:", e); }
-        }
-
-        // Static Fallback
-        const dbStatic = await this._getStaticDB();
-        if (!dbStatic[collectionName]) return;
-        dbStatic[collectionName] = dbStatic[collectionName].filter(i => i.id != id);
-        this._persistStaticDB(dbStatic);
+        const res = await fetch(`${API_BASE}/${collectionName}/${id}`, {
+            method: 'DELETE',
+            headers: this.getAuthHeader()
+        });
+        if (!res.ok) throw new Error('Delete Failed');
     },
 
-    // --- Internal Static DB Logic ---
-    async _getStaticDB() {
-        const cached = localStorage.getItem('varshini_db_cache');
-        if (cached) return JSON.parse(cached);
-        try {
-            const res = await fetch('./db.json');
-            const data = await res.json();
-            localStorage.setItem('varshini_db_cache', JSON.stringify(data));
-            return data;
-        } catch (e) {
-            return { products: [], leads: [], warranties: [], categories: [] };
-        }
-    },
-
-    _persistStaticDB(data) {
-        localStorage.setItem('varshini_db_cache', JSON.stringify(data));
-    }
+    // Legacy/Internal methods - kept empty or redirecting to avoid breaking deep dependencies if any
+    async _getStaticDB() { return {}; },
+    _persistStaticDB() { }
 };
 
 // Legacy Helper for simple calls if needed
@@ -326,6 +316,9 @@ function setupViewSwitching() {
                 if (targetView === 'settings') {
                     loadSettings();
                 }
+                if (targetView === 'dashboard' && typeof refreshCharts === 'function') {
+                    setTimeout(() => refreshCharts(), 100);
+                }
             }
         });
     });
@@ -351,11 +344,17 @@ async function refreshDashboard() {
             newWarranties: warranties.filter(w => w.status === 'Pending').length
         };
 
+        // Calculate Category Counts
+        const categoriesWithCounts = categories.map(c => ({
+            ...c,
+            count: products.filter(p => p.category === c.name).length
+        }));
+
         renderStats(stats);
         renderProducts(products);
         renderLeads(leads);
         renderWarranties(warranties);
-        renderCategories(categories);
+        renderCategories(categoriesWithCounts);
 
         if (typeof initializeCharts === 'function') {
             setTimeout(() => initializeCharts(), 100);
@@ -717,59 +716,31 @@ window.editProduct = async (id) => {
 
 async function saveProduct(formData) {
     try {
-        const id = formData.get('id'); // Note: Form usually has 'id' hidden input, verify name
-        // In previous view, it looked like 'productId'? Let's check admin.html line 381: name="id".
-        // But the previous code used formData.get('productId')? 
-        // Let's trust the previous code's intent but robustly check both or stick to what worked.
-        // Wait, line 589 says `const id = formData.get('productId')`.
-        // admin.html line 381: `<input type="hidden" name="id" id="productId">`
-        // formData.get('id') gets it by NAME attribute. So it should be 'id'.
-        // Why did the old code use 'productId'? maybe it was manually appended?
-        // I will use `formData.get('id')` as per standard HTML form behavior.
+        const id = formData.get('id');
 
-        let productId = formData.get('id');
+        // Remove 'id' from formData if it's empty to avoid server confusion, though server handles params
+        // Server PUT expects ID in URL. POST generates new ID.
 
-        let imageValue = formData.get('existingImage') || 'assets/placeholder.png';
+        showLoading('Saving Product...');
 
-        // Custom File Handling (Base64)
-        const file = formData.get('image');
-        if (file instanceof File && file.size > 0) {
-            if (file.size > 800 * 1024) {
-                alert("Image too large! Please use an image smaller than 800KB.");
-                return;
-            }
-            // Convert
-            imageValue = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        const productData = {
-            id: productId ? (isNaN(productId) ? productId : parseInt(productId)) : Date.now().toString(),
-            name: formData.get('name'),
-            category: formData.get('category'),
-            series: formData.get('series'),
-            hp: formData.get('hp'),
-            price: formData.get('price'),
-            stock: formData.get('stock'),
-            image: imageValue
-        };
-
-        if (productId) {
-            await DataService.updateItem('products', productData.id, productData);
+        if (id) {
+            await DataService.updateItem('products', id, formData);
             showNotification('✅ Product updated successfully!', 'success');
         } else {
-            await DataService.addItem('products', productData);
+            await DataService.addItem('products', formData);
             showNotification('✅ Product added successfully!', 'success');
         }
 
         closeModal();
+        hideLoading();
         refreshDashboard();
-        loadCategories(); // Update category counts
+
+        // Reload Categories just in case a new category was introduced
+        if (typeof loadCategories === 'function') loadCategories();
+        else if (typeof refreshDashboard === 'function') setTimeout(refreshDashboard, 500);
 
     } catch (error) {
+        hideLoading();
         showNotification('Error saving product: ' + error.message, 'error');
         console.error(error);
     }

@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = 3000;
 const JWT_SECRET = 'your-secret-key-2026'; // In production, use process.env.JWT_SECRET
-const DB_FILE = path.join(__dirname, 'db.json');
+const DB_FILE = path.join(__dirname, 'data', 'db.json');
 const multer = require('multer');
 
 // Configure Multer Storage (Image Uploads)
@@ -34,6 +34,15 @@ const upload = multer({ storage: storage });
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// Security Middleware: Block access to DB and Data folder
+app.use((req, res, next) => {
+    if (req.path.startsWith('/data') || req.path.includes('db.json') || req.path.startsWith('/.git')) {
+        return res.status(403).send('Forbidden');
+    }
+    next();
+});
+
 app.use(express.static(__dirname));
 
 // Session Config (Secure cookie handling)
@@ -383,6 +392,11 @@ app.delete('/api/warranties/:id', isAuthenticated, (req, res) => {
     } else {
         res.status(404).json({ success: false, message: 'Registration not found' });
     }
+});
+
+app.get('/api/leads', isAuthenticated, (req, res) => {
+    const db = readDb();
+    res.json(db.leads || []);
 });
 
 app.post('/api/leads/status', (req, res) => {
