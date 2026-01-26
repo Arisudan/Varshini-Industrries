@@ -523,7 +523,11 @@ const ProductManager = {
         const tbody = document.getElementById('productTableBody');
         if (tbody) {
             if (total === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products found</td></tr>';
+                if (this.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products in database. Add one!</td></tr>';
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products found in this category/search.</td></tr>';
+                }
             } else {
                 tbody.innerHTML = pageData.map(p => this.createRow(p)).join('');
             }
@@ -596,6 +600,24 @@ const ProductManager = {
 
     changePage(delta) {
         this.page += delta;
+        this.render();
+    },
+
+    // Optimistic UI method
+    removeOne(id) {
+        this.data = this.data.filter(p => String(p.id) !== String(id));
+        this.selected.delete(String(id));
+        this.render();
+    },
+
+    // Optimistic UI method
+    upsertOne(product) {
+        const idx = this.data.findIndex(p => String(p.id) === String(product.id));
+        if (idx >= 0) {
+            this.data[idx] = product;
+        } else {
+            this.data.unshift(product);
+        }
         this.render();
     },
 
@@ -991,16 +1013,29 @@ async function saveProduct(formData) {
         showLoading('Saving Product...');
 
         if (id) {
-            await DataService.updateItem('products', id, formData);
-            showNotification('✅ Product updated successfully!', 'success');
+            // Update
+            const { image } = await DataService.updateItem('products', id, formData);
+            // Construct optimistic object (best effort)
+            const updated = Object.fromEntries(formData.entries());
+            updated.id = id;
+            if (image) updated.image = image; // Use server returned image if any
+            else updated.image = document.getElementById('currentImagePath').value;
+
+            ProductManager.upsertOne(updated);
+            showNotification('✅ Product updated!', 'success');
         } else {
-            await DataService.addItem('products', formData);
-            showNotification('✅ Product added successfully!', 'success');
+            // Add
+            const res = await DataService.addItem('products', formData);
+            if (res.product) ProductManager.upsertOne(res.product); // Server returns full object with ID
+            showNotification('✅ Product added!', 'success');
         }
 
         closeModal();
         hideLoading();
-        refreshDashboard();
+        // Silent background sync
+        if (typeof loadCategories === 'function') loadCategories();
+
+
 
         // Reload Categories just in case a new category was introduced
         if (typeof loadCategories === 'function') loadCategories();
@@ -1014,14 +1049,21 @@ async function saveProduct(formData) {
 }
 
 window.deleteProduct = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm('Delete this product?')) return;
+
+    // 1. Optimistic UI Update (Instant)
+    ProductManager.removeOne(id);
+
     try {
+        // 2. Network Call
         await DataService.deleteItem('products', id);
-        showNotification('✅ Product deleted successfully!', 'success');
-        refreshDashboard();
-        loadCategories(); // Update category counts
+        showNotification('✅ Deleted', 'success');
+        // 3. Silent Category Update
+        if (typeof loadCategories === 'function') loadCategories();
     } catch (error) {
-        showNotification('Error deleting product: ' + error.message, 'error');
+        showNotification('Error deleting: ' + error.message, 'error');
+        // Revert on error
+        refreshDashboard();
     }
 };
 

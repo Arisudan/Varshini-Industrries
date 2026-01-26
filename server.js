@@ -13,6 +13,8 @@ const multer = require('multer');
 
 // Import SQLite Database
 const db = require('./database');
+const archiver = require('archiver');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -138,6 +140,7 @@ app.post('/api/change-password', isAuthenticated, async (req, res) => {
 
         await db.runQuery("UPDATE users SET password = ? WHERE id = ?", [hashed, user.id]);
 
+        await logActivity(req.user, 'Password Change', `Admin password changed for ${username}`);
         res.json({ success: true, message: 'Password updated successfully' });
     } catch (e) {
         res.status(500).json({ success: false, message: e.message });
@@ -238,6 +241,7 @@ app.post('/api/products', isAuthenticated, upload.single('image'), async (req, r
             [id, p.name, p.category, p.series, p.hp, p.price, p.stock, image, p.table_data]
         );
 
+        await logActivity(req.user, 'Add Product', `Added ${p.name} (${p.category})`);
         res.json({ success: true, product: { ...p, id, image } });
     } catch (e) {
         console.error(e);
@@ -266,6 +270,7 @@ app.put('/api/products/:id', isAuthenticated, upload.single('image'), async (req
             [p.name, p.category, p.series, p.hp, p.price, p.stock, image, tableData, id]
         );
 
+        await logActivity(req.user, 'Edit Product', `Updated product ID: ${id}`);
         res.json({ success: true });
     } catch (e) {
         console.error(e);
@@ -277,7 +282,10 @@ app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
         const result = await db.runQuery("DELETE FROM products WHERE id = ?", [id]);
-        if (result.changes > 0) res.json({ success: true });
+        if (result.changes > 0) {
+            await logActivity(req.user, 'Delete Product', `Deleted product ID: ${id}`);
+            res.json({ success: true });
+        }
         else res.status(404).json({ success: false });
     } catch (e) {
         res.status(500).json({ success: false });
@@ -326,6 +334,7 @@ app.delete('/api/categories/:id', isAuthenticated, async (req, res) => {
         if (products) return res.status(400).json({ success: false, message: 'Cannot delete: Category is not empty' });
 
         await db.runQuery("DELETE FROM categories WHERE id = ?", [id]);
+        await logActivity(req.user, 'Delete Category', `Deleted category ID: ${id}`);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false });
@@ -402,6 +411,7 @@ app.post('/api/leads/status', isAuthenticated, async (req, res) => {
     try {
         const { id, status } = req.body;
         await db.runQuery("UPDATE leads SET status = ? WHERE id = ?", [status, id]);
+        await logActivity(req.user, 'Lead Status', `Updated lead ${id} to ${status}`);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false });
@@ -418,9 +428,74 @@ app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// --- ACTIVITY LOG & BACKUP ---
+
+// Helper to log activity
+async function logActivity(user, action, details) {
+    try {
+        const id = Date.now();
+        const date = new Date().toISOString();
+        const username = user ? user.username : 'System';
+
+        await db.runQuery(
+            "INSERT INTO activity_logs (id, date, user, action, details) VALUES (?, ?, ?, ?, ?)",
+            [id, date, username, action, details]
+        );
+    } catch (e) {
+        console.error("Logging failed:", e);
+    }
+}
+
+app.get('/api/admin/activity', isAuthenticated, async (req, res) => {
+    try {
+        // Limit to last 50 activities
+        const logs = await db.query("SELECT * FROM activity_logs ORDER BY date DESC LIMIT 50");
+        res.json(logs);
+    } catch (e) {
+        res.status(500).send("Error fetching logs");
+    }
+});
+
+app.get('/api/admin/backup', isAuthenticated, (req, res) => {
+    // Create a zip stream
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    res.attachment('varshini_backup_' + new Date().toISOString().split('T')[0] + '.zip');
+
+    archive.pipe(res);
+
+    // Append DB file
+    const dbPath = path.join(__dirname, 'data', 'varshini.db');
+    if (fs.existsSync(dbPath)) {
+        archive.file(dbPath, { name: 'varshini.db' });
+    }
+
+    // Append Uploads
+    const uploadsDir = path.join(__dirname, 'public/assets/uploads');
+    if (fs.existsSync(uploadsDir)) {
+        archive.directory(uploadsDir, 'uploads');
+    }
+
+    archive.finalize();
+});
+
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`- Login Page: http://localhost:${PORT}/login.html`);
     console.log(`- Database: SQLite (High Performance)`);
+
+    // Ensure Activity Table Exists (Runtime Check)
+    try {
+        await db.runQuery(`CREATE TABLE IF NOT EXISTS activity_logs (
+            id INTEGER PRIMARY KEY,
+            date TEXT,
+            user TEXT,
+            action TEXT,
+            details TEXT
+        )`);
+        console.log("- Activity Logging: Active");
+    } catch (e) {
+        console.error("- Activity Logging: Failed to Init", e);
+    }
 });
