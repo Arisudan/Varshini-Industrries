@@ -630,16 +630,29 @@ const LeadManager = {
 
     init(leads) {
         this.data = leads || [];
+        // Do NOT reset filters here, just re-render with new data
         this.render();
     },
 
     setFilterStatus(status, btn) {
         this.filters.status = status;
-        // Update active btn style
-        if (btn) {
-            document.querySelectorAll('#view-leads .filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+
+        // Use passed button OR find it by text content if necessary (fallback)
+        let targetBtn = btn;
+        if (!targetBtn && status) {
+            // Fallback find button by text
+            const buttons = document.querySelectorAll('#view-leads .filter-btn');
+            buttons.forEach(b => {
+                if (b.innerText.includes(status) || (status === 'All' && b.innerText === 'All')) targetBtn = b;
+            });
         }
+
+        // Update active btn style
+        if (targetBtn) {
+            document.querySelectorAll('#view-leads .filter-btn').forEach(b => b.classList.remove('active'));
+            targetBtn.classList.add('active');
+        }
+
         this.page = 1;
         this.render();
     },
