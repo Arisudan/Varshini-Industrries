@@ -1,30 +1,33 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 const session = require('express-session');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const helmet = require('helmet');
+const multer = require('multer');
+
+// Import SQLite Database
+const db = require('./database');
 
 const app = express();
-const PORT = 3000;
-const JWT_SECRET = 'your-secret-key-2026'; // In production, use process.env.JWT_SECRET
-const DB_FILE = path.join(__dirname, 'data', 'db.json');
-const multer = require('multer');
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Configure Multer Storage (Image Uploads)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, 'assets/uploads');
+        const uploadDir = path.join(__dirname, 'public/assets/uploads');
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
         }
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Unique filename: product-timestamp.ext
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
     }
@@ -33,29 +36,32 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(cors());
+app.use(helmet({
+    contentSecurityPolicy: false,
+}));
 app.use(bodyParser.json());
 
-// Security Middleware: Block access to DB and Data folder
+// Security Middleware: Block access to raw DB files
 app.use((req, res, next) => {
-    if (req.path.startsWith('/data') || req.path.includes('db.json') || req.path.startsWith('/.git')) {
+    if (req.path.startsWith('/data') || req.path.includes('.db') || req.path.includes('db.json') || req.path.startsWith('/.git')) {
         return res.status(403).send('Forbidden');
     }
     next();
 });
 
-app.use(express.static(__dirname));
+// Serve frontend from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Session Config (Secure cookie handling)
+// Session Config
 app.use(session({
-    secret: 'titanflow-secure-secret-key-2026', // In production, use ENV var
+    secret: process.env.SESSION_SECRET || 'fallback_secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: 3600000 } // 1 Hour session, set secure: true for HTTPS
+    cookie: { secure: false, maxAge: 3600000, httpOnly: true }
 }));
 
-// Middleware: Check Auth (Session or Token)
+// Middleware: Check Auth
 const isAuthenticated = (req, res, next) => {
-    // Check for JWT token in Authorization header
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -66,51 +72,36 @@ const isAuthenticated = (req, res, next) => {
             return next();
         });
     } else if (req.session && req.session.user) {
-        // Fallback to session
         return next();
     } else {
         return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
     }
 };
 
-// Helper to read DB
-const readDb = () => {
-    try {
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(data);
-    } catch (err) {
-        return { users: [], products: [], leads: [], stats: {} };
-    }
-};
-
-// Helper to write DB
-const writeDb = (data) => {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 4));
-};
-
 // --- AUTH API ---
 app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    const db = readDb();
+    try {
+        const { username, password } = req.body;
+        const user = await db.getOne("SELECT * FROM users WHERE username = ?", [username]);
 
-    const user = db.users.find(u => u.username === username);
+        if (user && bcrypt.compareSync(password, user.password)) {
+            const token = jwt.sign(
+                { username: user.username, role: user.role, name: user.name },
+                JWT_SECRET,
+                { expiresIn: '24h' }
+            );
 
-    if (user && bcrypt.compareSync(password, user.password)) {
-        // Create JWT
-        const token = jwt.sign(
-            { username: user.username, role: user.role, name: user.name },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        req.session.user = { name: user.name, role: user.role }; // Support sessions too
-        res.json({
-            success: true,
-            token: token,
-            user: { name: user.name, role: user.role }
-        });
-    } else {
-        res.status(401).json({ success: false, message: 'Invalid Username or Password' });
+            req.session.user = { name: user.name, role: user.role, username: user.username };
+            res.json({
+                success: true,
+                token: token,
+                user: { name: user.name, role: user.role }
+            });
+        } else {
+            res.status(401).json({ success: false, message: 'Invalid Username or Password' });
+        }
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
@@ -127,302 +118,303 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
-app.post('/api/change-password', isAuthenticated, (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    const db = readDb();
+app.post('/api/change-password', isAuthenticated, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const username = req.user ? req.user.username : (req.session.user ? req.session.user.username : null);
 
-    // Find user from token/session
-    // In production, use req.user.username from JWT
-    const username = req.user ? req.user.username : (req.session.user ? req.session.user.username : 'admin');
-    const userIndex = db.users.findIndex(u => u.username === username);
+        if (!username) return res.status(401).send('Unauthorized');
 
-    if (userIndex === -1) {
-        return res.status(404).json({ success: false, message: 'User not found' });
+        const user = await db.getOne("SELECT * FROM users WHERE username = ?", [username]);
+
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (!bcrypt.compareSync(currentPassword, user.password)) {
+            return res.status(400).json({ success: false, message: 'Incorrect current password' });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hashed = bcrypt.hashSync(newPassword, salt);
+
+        await db.runQuery("UPDATE users SET password = ? WHERE id = ?", [hashed, user.id]);
+
+        res.json({ success: true, message: 'Password updated successfully' });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
     }
-
-    const user = db.users[userIndex];
-    if (!bcrypt.compareSync(currentPassword, user.password)) {
-        return res.status(400).json({ success: false, message: 'Incorrect current password' });
-    }
-
-    // Update password
-    const salt = bcrypt.genSaltSync(10);
-    db.users[userIndex].password = bcrypt.hashSync(newPassword, salt);
-    writeDb(db);
-
-    res.json({ success: true, message: 'Password updated successfully' });
 });
 
 // --- PUBLIC APIs ---
-app.get('/api/public/products', (req, res) => {
-    const db = readDb();
-    res.json(db.products);
-});
-
-// NEW: Capture Leads from Contact Form
-app.post('/api/leads', (req, res) => {
-    const { name, email, phone, message } = req.body;
-    const db = readDb();
-
-    const newLead = {
-        id: uuidv4(),
-        date: new Date().toLocaleString(),
-        client: name,
-        interest: `Enquiry: ${message.substring(0, 30)}...`,
-        contact: { email, phone },
-        status: 'New Lead'
-    };
-
-    if (!db.leads) db.leads = [];
-    db.leads.unshift(newLead); // Add to top
-
-    writeDb(db);
-    res.json({ success: true, message: 'Lead captured successfully' });
-});
-
-// --- PROTECTED DASHBOARD APIs (No server-side auth check, using client localStorage) ---
-app.get('/api/dashboard', isAuthenticated, (req, res) => {
-    const db = readDb();
-
-    // Calculate categories with counts for dashboard
-    let categories = db.categories || [];
-    if (categories.length === 0 && db.products) {
-        // Extract unique categories from products if none defined
-        const uniqueCats = [...new Set(db.products.map(p => p.category).filter(Boolean))];
-        categories = uniqueCats.map((c, index) => ({ id: Date.now() + index, name: c }));
-    }
-
-    const categoriesWithCounts = categories.map(c => ({
-        ...c,
-        count: db.products.filter(p => p.category === c.name).length
-    }));
-
-    res.json({
-        stats: realStats,
-        products: db.products || [],
-        leads: db.leads || [],
-        warranties: db.warranties || [],
-        categories: categoriesWithCounts
-    });
-});
-
-app.post('/api/products', isAuthenticated, upload.single('image'), (req, res) => {
-    const db = readDb();
-    const newProduct = req.body;
-
-    // Convert table_data from JSON string if sent as string (Multipart form data sends nested objects as strings sometimes)
-    if (typeof newProduct.table_data === 'string') {
-        try {
-            newProduct.table_data = JSON.parse(newProduct.table_data);
-        } catch (e) {
-            newProduct.table_data = {};
-        }
-    }
-
-    newProduct.id = Date.now();
-
-    // Handle Image Path
-    if (req.file) {
-        // Save relative path using forward slashes for URL compatibility
-        newProduct.image = 'assets/uploads/' + req.file.filename;
-    } else if (!newProduct.image) {
-        newProduct.image = 'assets/Home/Centrifugal Pumps.png';
-    }
-
-    db.products.push(newProduct);
-    writeDb(db);
-    res.json({ success: true, product: newProduct });
-});
-
-app.put('/api/products/:id', isAuthenticated, upload.single('image'), (req, res) => {
-    const id = parseInt(req.params.id);
-    const updatedData = req.body;
-    const db = readDb();
-    const index = db.products.findIndex(p => p.id === id);
-
-    if (index !== -1) {
-        // Parse table_data if string
-        if (typeof updatedData.table_data === 'string') {
+app.get('/api/public/products', async (req, res) => {
+    try {
+        const products = await db.query("SELECT * FROM products");
+        // Parse JSON strings back to objects
+        const parsed = products.map(p => {
             try {
-                updatedData.table_data = JSON.parse(updatedData.table_data);
+                if (p.table_data && typeof p.table_data === 'string') {
+                    p.table_data = JSON.parse(p.table_data);
+                }
             } catch (e) { }
-        }
+            return p;
+        });
+        res.json(parsed);
+    } catch (e) {
+        res.status(500).send('Error fetching products');
+    }
+});
 
-        // Keep existing image if no new one, or update if file provided
-        if (req.file) {
-            updatedData.image = 'assets/uploads/' + req.file.filename;
+app.post('/api/leads', async (req, res) => {
+    try {
+        const { name, email, phone, message } = req.body;
+        const id = uuidv4();
+        const date = new Date().toLocaleString();
+        const status = 'New Lead';
+        const interest = `Enquiry: ${message ? message.substring(0, 30) : ''}...`;
+
+        await db.runQuery(
+            "INSERT INTO leads (id, date, client, interest, email, phone, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [id, date, name, interest, email, phone, message, status]
+        );
+
+        res.json({ success: true, message: 'Lead captured successfully' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: 'Error saving lead' });
+    }
+});
+
+// --- DASHBOARD APIs ---
+app.get('/api/dashboard', isAuthenticated, async (req, res) => {
+    try {
+        const productsRaw = await db.query("SELECT * FROM products");
+        const leads = await db.query("SELECT * FROM leads ORDER BY rowid DESC"); // rowid loosely proxies insertion order or use date sorting in client
+        const warranties = await db.query("SELECT * FROM warranties ORDER BY id DESC");
+        const categoriesRaw = await db.query("SELECT * FROM categories");
+
+        // Parse Product JSON
+        const products = productsRaw.map(p => {
+            try {
+                if (typeof p.table_data === 'string') p.table_data = JSON.parse(p.table_data);
+            } catch (e) { }
+            return p;
+        });
+
+        // Calculate counts
+        const categories = categoriesRaw.map(c => ({
+            ...c,
+            count: products.filter(p => p.category === c.name).length
+        }));
+
+        res.json({
+            stats: {}, // Frontend calculates stats from raw arrays
+            products,
+            leads,
+            warranties,
+            categories
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send("Dashboard Error");
+    }
+});
+
+// --- PRODUCTS MANAGEMENT ---
+app.post('/api/products', isAuthenticated, upload.single('image'), async (req, res) => {
+    try {
+        const p = req.body;
+        // Handling multipart string vs objects
+        if (typeof p.table_data === 'string') {
+            try { JSON.parse(p.table_data); } catch (e) { p.table_data = "{}" } // Validate JSON
         } else {
-            // If no file uploaded, use the hidden field 'existingImage' or keep current DB value
-            updatedData.image = req.body.existingImage || db.products[index].image;
+            p.table_data = JSON.stringify(p.table_data || {});
         }
 
-        // Merge: ensure existing ID is kept
-        db.products[index] = { ...db.products[index], ...updatedData, id: id };
-        writeDb(db);
+        const id = Date.now();
+        let image = 'assets/Home/Centrifugal Pumps.png';
+        if (req.file) image = 'assets/uploads/' + req.file.filename;
+
+        await db.runQuery(
+            "INSERT INTO products (id, name, category, series, hp, price, stock, image, table_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [id, p.name, p.category, p.series, p.hp, p.price, p.stock, image, p.table_data]
+        );
+
+        res.json({ success: true, product: { ...p, id, image } });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false });
+    }
+});
+
+app.put('/api/products/:id', isAuthenticated, upload.single('image'), async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const p = req.body;
+        const currentCheck = await db.getOne("SELECT image FROM products WHERE id = ?", [id]);
+
+        if (!currentCheck) return res.status(404).json({ success: false, message: 'Product not found' });
+
+        let image = currentCheck.image;
+        if (req.file) {
+            image = 'assets/uploads/' + req.file.filename;
+        }
+
+        let tableData = p.table_data;
+        if (typeof tableData !== 'string') tableData = JSON.stringify(tableData || {});
+
+        await db.runQuery(
+            "UPDATE products SET name=?, category=?, series=?, hp=?, price=?, stock=?, image=?, table_data=? WHERE id=?",
+            [p.name, p.category, p.series, p.hp, p.price, p.stock, image, tableData, id]
+        );
+
         res.json({ success: true });
-    } else {
-        res.status(404).json({ success: false, message: 'Product not found' });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false });
     }
 });
 
-app.delete('/api/products/:id', isAuthenticated, (req, res) => {
-    const id = parseInt(req.params.id);
-    const db = readDb();
-    const initialLength = db.products.length;
-    db.products = db.products.filter(p => p.id !== id);
-    if (db.products.length < initialLength) {
-        writeDb(db);
+app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const result = await db.runQuery("DELETE FROM products WHERE id = ?", [id]);
+        if (result.changes > 0) res.json({ success: true });
+        else res.status(404).json({ success: false });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// --- CATEGORIES MANAGEMENT ---
+app.get('/api/categories', async (req, res) => {
+    try {
+        const cats = await db.query("SELECT * FROM categories");
+        const prodCounts = await db.query("SELECT category, count(*) as count FROM products GROUP BY category");
+
+        const result = cats.map(c => {
+            const match = prodCounts.find(pc => pc.category === c.name);
+            return { ...c, count: match ? match.count : 0 };
+        });
+        res.json(result);
+    } catch (e) {
+        res.status(500).send("Error");
+    }
+});
+
+app.post('/api/categories', isAuthenticated, async (req, res) => {
+    try {
+        const { name } = req.body;
+        // Check exist
+        const exists = await db.getOne("SELECT * FROM categories WHERE name LIKE ?", [name]);
+        if (exists) return res.status(400).json({ success: false, message: 'Category exists' });
+
+        const id = Date.now();
+        await db.runQuery("INSERT INTO categories (id, name) VALUES (?, ?)", [id, name]);
         res.json({ success: true });
-    } else {
-        res.status(404).json({ success: false, message: 'Product not found' });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
-// --- CATEGORY APIs ---
-app.get('/api/categories', (req, res) => {
-    const db = readDb();
-    if (!db.categories) {
-        // Extract unique categories from products if not present
-        const uniqueCats = [...new Set(db.products.map(p => p.category).filter(Boolean))];
-        db.categories = uniqueCats.map((c, index) => ({ id: Date.now() + index, name: c }));
-        writeDb(db);
-    }
-    // Calculate counts dynamically
-    const categoriesWithCounts = db.categories.map(c => ({
-        ...c,
-        count: db.products.filter(p => p.category === c.name).length
-    }));
+app.delete('/api/categories/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const cat = await db.getOne("SELECT * FROM categories WHERE id = ?", [id]);
+        if (!cat) return res.status(404).json({ success: false });
 
-    res.json(categoriesWithCounts);
-});
+        // Check products
+        const products = await db.getOne("SELECT * FROM products WHERE category = ?", [cat.name]);
+        if (products) return res.status(400).json({ success: false, message: 'Cannot delete: Category is not empty' });
 
-app.post('/api/categories', isAuthenticated, (req, res) => {
-    const { name } = req.body;
-    const db = readDb();
-    if (!db.categories) db.categories = [];
-
-    if (db.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-        return res.status(400).json({ success: false, message: 'Category already exists' });
-    }
-
-    db.categories.push({ id: Date.now(), name });
-    writeDb(db);
-    res.json({ success: true });
-});
-
-app.delete('/api/categories/:id', isAuthenticated, (req, res) => {
-    const id = parseInt(req.params.id);
-    const db = readDb();
-
-    // Ensure categories exists (should be initialized by GET, but safe check)
-    if (!db.categories) {
-        db.categories = [];
-    }
-
-    const category = db.categories.find(c => c.id === id);
-    if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
-
-    if (db.products.some(p => p.category === category.name)) {
-        return res.status(400).json({ success: false, message: 'Cannot delete category with associated products.' });
-    }
-
-    db.categories = db.categories.filter(c => c.id !== id);
-    writeDb(db);
-    res.json({ success: true });
-});
-
-// --- WARRANTY REGISTRATION APIs ---
-
-app.get('/api/warranties', isAuthenticated, (req, res) => {
-    const db = readDb();
-    if (!db.warranties) db.warranties = [];
-    res.json(db.warranties);
-});
-
-app.post('/api/warranties', (req, res) => {
-    const registration = req.body;
-    const db = readDb();
-    if (!db.warranties) db.warranties = [];
-
-    // Validate required fields
-    if (!registration.name || !registration.email) {
-        return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-
-    // Add ID and Timestamp and default status
-    registration.id = Date.now();
-    registration.date = new Date().toISOString();
-    registration.status = 'Pending';
-
-    db.warranties.unshift(registration);
-
-    writeDb(db);
-    res.json({ success: true, message: 'Registration submitted successfully' });
-});
-
-app.put('/api/warranties/:id', isAuthenticated, (req, res) => {
-    const id = parseInt(req.params.id);
-    const { status } = req.body;
-    const db = readDb();
-
-    if (!db.warranties) return res.status(404).json({ success: false });
-
-    const item = db.warranties.find(d => d.id === id);
-    if (item) {
-        item.status = status;
-        writeDb(db);
+        await db.runQuery("DELETE FROM categories WHERE id = ?", [id]);
         res.json({ success: true });
-    } else {
-        res.status(404).json({ success: false, message: 'Registration not found' });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
-app.delete('/api/warranties/:id', isAuthenticated, (req, res) => {
-    const id = parseInt(req.params.id);
-    const db = readDb();
+// --- WARRANTY MANAGEMENT ---
+app.get('/api/warranties', isAuthenticated, async (req, res) => {
+    try {
+        const rows = await db.query("SELECT * FROM warranties ORDER BY date DESC");
+        res.json(rows);
+    } catch (e) {
+        res.status(500).send("Error");
+    }
+});
 
-    if (!db.warranties) return res.status(404).json({ success: false });
+app.post('/api/warranties', async (req, res) => {
+    try {
+        const w = req.body;
+        if (!w.name || !w.email) return res.status(400).json({ success: false, message: 'Missing fields' });
 
-    const initialLength = db.warranties.length;
-    db.warranties = db.warranties.filter(d => d.id !== id);
+        const id = Date.now();
+        const date = new Date().toISOString();
+        const status = 'Pending';
 
-    if (db.warranties.length < initialLength) {
-        writeDb(db);
+        await db.runQuery(
+            "INSERT INTO warranties (id, date, name, email, phone, city, product, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [id, date, w.name, w.email, w.phone, w.city, w.product, w.address, status]
+        );
+        res.json({ success: true, message: 'Submitted' });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.put('/api/warranties/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { status } = req.body;
+        await db.runQuery("UPDATE warranties SET status = ? WHERE id = ?", [status, id]);
         res.json({ success: true });
-    } else {
-        res.status(404).json({ success: false, message: 'Registration not found' });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
-app.get('/api/leads', isAuthenticated, (req, res) => {
-    const db = readDb();
-    res.json(db.leads || []);
-});
-
-app.post('/api/leads/status', (req, res) => {
-    const { id, status } = req.body;
-    const db = readDb();
-    const lead = db.leads.find(l => l.id == id); // ID is string now (UUID)
-    if (lead) {
-        lead.status = status;
-        writeDb(db);
+app.delete('/api/warranties/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        await db.runQuery("DELETE FROM warranties WHERE id = ?", [id]);
         res.json({ success: true });
-    } else {
-        res.status(404).json({ success: false, message: 'Lead not found' });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
-app.delete('/api/leads/:id', (req, res) => {
-    const id = req.params.id;
-    const db = readDb();
-    const initialLength = db.leads.length;
-    // Use loose equality to handle both numeric and string IDs
-    db.leads = db.leads.filter(l => String(l.id) !== String(id));
-    if (db.leads.length < initialLength) {
-        writeDb(db);
-        res.json({ success: true, message: 'Lead deleted successfully' });
-    } else {
-        res.status(404).json({ success: false, message: 'Lead not found' });
+// --- LEADS MANAGEMENT ---
+app.get('/api/leads', isAuthenticated, async (req, res) => {
+    try {
+        // Return full structure expected by frontend
+        const rows = await db.query("SELECT * FROM leads ORDER BY rowid DESC");
+        // Reconstruct 'contact' object if frontend expects it nested
+        const mapped = rows.map(r => ({
+            ...r,
+            contact: { email: r.email, phone: r.phone }
+        }));
+        res.json(mapped);
+    } catch (e) {
+        res.status(500).send("Error");
+    }
+});
+
+app.post('/api/leads/status', isAuthenticated, async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        await db.runQuery("UPDATE leads SET status = ? WHERE id = ?", [status, id]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = req.params.id; // UUID is string from params
+        await db.runQuery("DELETE FROM leads WHERE id = ?", [id]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
@@ -430,4 +422,5 @@ app.delete('/api/leads/:id', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`- Login Page: http://localhost:${PORT}/login.html`);
+    console.log(`- Database: SQLite (High Performance)`);
 });

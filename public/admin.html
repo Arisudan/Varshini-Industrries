@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="Logo.jpeg">
+    <title>Varshini Industries | Admin Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="admin.css">
+    <style>
+        .pagination-wrapper button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination-wrapper button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-field {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .bulk-toolbar {
+            display: flex;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fa-solid fa-layer-group"></i> VARSHINI<span>INDUSTRRIES</span>
+        </div>
+
+        <ul class="side-menu">
+            <li class="active" data-view="dashboard"><a href="#"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+            </li>
+            <li data-view="products"><a href="#"><i class="fa-solid fa-box-open"></i> Product Catalog</a></li>
+            <li data-view="categories"><a href="#"><i class="fa-solid fa-tags"></i> Categories</a></li>
+            <li data-view="warranties">
+                <a href="#">
+                    <i class="fa-solid fa-shield-halved"></i> Warranty Requests
+                </a>
+            </li>
+            <li data-view="leads"><a href="#"><i class="fa-solid fa-envelope-open-text"></i> Inquiries</a></li>
+            <li data-view="settings"><a href="#"><i class="fa-solid fa-sliders"></i> Settings</a></li>
+        </ul>
+
+        <div class="user-panel">
+            <div class="user-info">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div>
+                    <h4>Admin User</h4>
+                    <small>Super Admin</small>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="admin-header">
+            <button id="sidebarToggle" class="mobile-menu-btn"><i class="fa-solid fa-bars"></i></button>
+            <h2>Dashboard Overview</h2>
+            <div class="date-display" id="dateDisplay">October 26, 2026</div>
+        </header>
+
+        <!-- VIEW: DASHBOARD -->
+        <div id="view-dashboard" class="admin-view">
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Analytics Charts -->
+            <div class="analytics-section">
+                <h3 style="color: var(--navy); margin-bottom: 20px; font-size: 1.3rem;">
+                    <i class="fa-solid fa-chart-line"></i> Analytics Overview
+                </h3>
+
+                <div class="charts-grid">
+                    <!-- Lead Trends Chart -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h4>Lead Trends (Last 7 Days)</h4>
+                            <i class="fa-solid fa-chart-line" style="color: var(--teal);"></i>
+                        </div>
+                        <canvas id="leadTrendsChart"></canvas>
+                    </div>
+
+                    <!-- Status Distribution Chart -->
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h4>Lead Status Distribution</h4>
+                            <i class="fa-solid fa-chart-pie" style="color: var(--teal);"></i>
+                        </div>
+                        <canvas id="statusDistChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Product Categories Chart -->
+                <div class="chart-container" style="margin-top: 20px;">
+                    <div class="chart-header">
+                        <h4>Popular Product Categories</h4>
+                        <i class="fa-solid fa-chart-bar" style="color: var(--teal);"></i>
+                    </div>
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: PRODUCTS (Refactored) -->
+        <div id="view-products" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Product Management</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-outline" onclick="exportProductsToCSV()">
+                            <i class="fa-solid fa-download"></i> CSV
+                        </button>
+                        <button class="btn btn-primary" onclick="openAddProductModal()">
+                            <i class="fa-solid fa-plus"></i> Add New
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Controls -->
+                <div class="controls-toolbar">
+                    <div class="flex-group">
+                        <input type="text" id="prodSearch" class="input-field" placeholder="Search products..."
+                            onkeyup="ProductManager.render()">
+                        <select id="prodCatFilter" class="input-field" onchange="ProductManager.render()">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="prodStockFilter" class="input-field" onchange="ProductManager.render()">
+                            <option value="">All Stock Status</option>
+                            <option value="In Stock">In Stock</option>
+                            <option value="Low Stock">Low Stock</option>
+                            <option value="Out of Stock">Out of Stock</option>
+                        </select>
+                    </div>
+
+                    <div id="prodBulkActions" class="bulk-toolbar"
+                        style="display:none; margin-top:10px; padding:10px; background:#ffebeb; border:1px solid #ffcccc; border-radius:4px; align-items:center; gap:15px;">
+                        <span style="color:#d90429; font-weight:600;"><span id="prodSelectedCount">0</span>
+                            selected</span>
+                        <button class="btn-sm btn-danger" onclick="ProductManager.deleteSelected()">
+                            <i class="fa-solid fa-trash"></i> Delete Selected
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 20px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="prodSelectAll"
+                                        onchange="ProductManager.toggleAll(this)"></th>
+                                <th style="width: 70px;">Image</th>
+                                <th style="cursor:pointer" onclick="ProductManager.setSort('name')">Model <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th style="cursor:pointer" onclick="ProductManager.setSort('category')">Category <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th style="cursor:pointer" onclick="ProductManager.setSort('price')">Price <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th style="cursor:pointer" onclick="ProductManager.setSort('stock')">Stock <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <tr>
+                                <td colspan="7" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-wrapper" id="prodPagination"
+                    style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: CATEGORIES (Restored) -->
+        <div id="view-categories" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Manage Categories</h3>
+                    <button class="btn btn-primary" onclick="openAddCategoryModal()"><i class="fa-solid fa-plus"></i>
+                        Add Category</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Products Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: LEADS (Refactored) -->
+        <div id="view-leads" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Customer Inquiries</h3>
+                    <button class="btn btn-outline" onclick="exportLeadsToCSV()">
+                        <i class="fa-solid fa-download"></i> Export CSV
+                    </button>
+                </div>
+
+                <!-- Lead Controls -->
+                <div class="controls-toolbar">
+                    <div class="flex-group" style="flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                        <!-- Tabs -->
+                        <div class="btn-group">
+                            <button class="filter-btn active"
+                                onclick="LeadManager.setFilterStatus('All', this)">All</button>
+                            <button class="filter-btn"
+                                onclick="LeadManager.setFilterStatus('New Lead', this)">New</button>
+                            <button class="filter-btn"
+                                onclick="LeadManager.setFilterStatus('Contacted', this)">Contacted</button>
+                            <button class="filter-btn" onclick="LeadManager.setFilterStatus('Sold', this)">Sold</button>
+                        </div>
+
+                        <!-- Search & Date -->
+                        <input type="text" id="leadSearch" class="input-field" placeholder="Search leads..."
+                            onkeyup="LeadManager.render()">
+                        <input type="date" id="leadStartDate" class="input-field" onchange="LeadManager.render()"
+                            title="Start Date">
+                        <input type="date" id="leadEndDate" class="input-field" onchange="LeadManager.render()"
+                            title="End Date">
+                    </div>
+
+                    <div id="leadBulkActions" class="bulk-toolbar"
+                        style="display:none; margin-top:10px; padding:10px; background:#e3f2fd; border:1px solid #bbdefb; border-radius:4px; align-items:center; gap:15px;">
+                        <span style="color:#0d47a1; font-weight:600;"><span id="leadSelectedCount">0</span>
+                            selected</span>
+                        <select id="leadBulkStatus" style="padding:5px; border-radius:4px; border:1px solid #ccc;">
+                            <option value="">Mark as...</option>
+                            <option value="New Lead">New Lead</option>
+                            <option value="Contacted">Contacted</option>
+                            <option value="Sold">Sold</option>
+                        </select>
+                        <button class="btn-sm btn-primary" onclick="LeadManager.updateSelectedStatus()">Apply</button>
+                        <button class="btn-sm btn-danger" onclick="LeadManager.deleteSelected()">Delete</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="margin-top: 20px;">
+                    <table class="data-table plain">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;"><input type="checkbox" id="leadSelectAll"
+                                        onchange="LeadManager.toggleAll(this)"></th>
+                                <th style="cursor:pointer" onclick="LeadManager.setSort('date')">Date <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th style="cursor:pointer" onclick="LeadManager.setSort('client')">Client <i
+                                        class="fa-solid fa-sort"></i></th>
+                                <th>Interest</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination-wrapper" id="leadPagination"
+                    style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+                    <!-- Populated by JS -->
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: DEALERS (Placeholder) -->
+        <div id="view-warranties" class="admin-view" style="display: none;">
+            <section class="panel-section">
+                <div class="panel-header">
+                    <h3>Warranty Requests</h3>
+                    <div>
+                        <span style="font-size:0.9rem; color:#666; margin-right:10px;">Filter:</span>
+                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('all')">All</button>
+                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('Pending')">Pending</button>
+                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('Approved')">Approved</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table responsive">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Customer Name</th>
+                                <th>Contact Info</th>
+                                <th>Address / Details</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="warrantiesTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- VIEW: SETTINGS -->
+        <!-- VIEW: SETTINGS -->
+        <div id="view-settings" class="admin-view" style="display: none;">
+            <div class="settings-header">
+                <h3><i class="fa-solid fa-sliders"></i> System Settings</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-outline" onclick="resetSettings()">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fa-solid fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Profile / General Settings Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box blue"><i class="fa-solid fa-user-gear"></i></div>
+                        <h4>General Profile</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="siteName" placeholder=" " value="Varshini Industries">
+                            <label>Site Name</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="email" id="adminEmail" placeholder=" " value="info@varshiniindustrries.com">
+                            <label>Admin Email</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="contactPhone" placeholder=" " value="+91-8047838824">
+                            <label>Contact Phone</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box red"><i class="fa-solid fa-lock"></i></div>
+                        <h4>Security</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="password" id="currentPassword" placeholder=" ">
+                            <label>Current Password</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="newPassword" placeholder=" ">
+                            <label>New Password</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="confirmNewPassword" placeholder=" ">
+                            <label>Confirm Password</label>
+                        </div>
+                        <button class="btn btn-danger full-width" onclick="changePassword()">
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SEO Management Card -->
+                <div class="settings-card wide">
+                    <div class="card-header">
+                        <div class="icon-box purple"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                        <h4>SEO Management</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="seoTitle" placeholder=" "
+                                value="Varshini Industries | Industrial Pumping Solutions">
+                            <label>Meta Title</label>
+                            <small>Recommended: 50-60 characters</small>
+                        </div>
+                        <div class="input-group">
+                            <textarea id="seoDescription" rows="3"
+                                placeholder=" ">Varshini Industries - Global leader in stainless steel submersible pumps, monoblock pumps, and industrial fluid management solutions.</textarea>
+                            <label>Meta Description</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="seoKeywords" placeholder=" "
+                                value="industrial pumps, monoblock pumps, submersible pumps">
+                            <label>Keywords (comma-separated)</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="ogImage" placeholder=" " value="Logo.jpeg">
+                            <label>Social Share Image URL</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics Card -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <div class="icon-box yellow"><i class="fa-solid fa-chart-pie"></i></div>
+                        <h4>Analytics</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="input-group">
+                            <input type="text" id="gaId" placeholder=" ">
+                            <label>Google Analytics ID</label>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="fbPixel" placeholder=" ">
+                            <label>Facebook Pixel ID</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Migration Card (Temporary) -->
+
+
+                <!-- Deployment & Sync Card -->
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add Product Modal -->
+    <div class="modal-overlay" id="addProductModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Pump</h3>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            <form id="addProductForm">
+                <input type="hidden" name="id" id="productId">
+                <div class="form-group">
+                    <label>Model Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Titan V6-500">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" id="productCategory" required
+                        style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">Select Category</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Series</label>
+                    <input type="text" name="series" required placeholder="e.g. Stainless Series">
+                </div>
+                <div class="form-group">
+                    <label>HP / Specs</label>
+                    <input type="text" name="hp" required placeholder="e.g. 5.0 HP">
+                </div>
+                <div class="form-group">
+                    <label>Price (INR)</label>
+                    <input type="text" name="price" required placeholder="e.g. 18,500">
+                </div>
+                <div class="form-group">
+                    <label>Stock Status</label>
+                    <select name="stock">
+                        <option value="In Stock">In Stock</option>
+                        <option value="Low Stock">Low Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Product Image</label>
+                    <input type="file" name="image" id="imageFileInput" accept="image/*"
+                        style="padding: 5px; border: 1px solid #ddd; width: 100%; border-radius: 4px;">
+                    <input type="hidden" name="existingImage" id="currentImagePath">
+                    <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                        <p style="font-size: 0.8rem; margin-bottom: 5px;">Selected Image:</p>
+                        <img id="imagePreview" src="" alt="Preview"
+                            style="max-height: 100px; border-radius: 4px; border: 1px solid #ddd;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal-overlay" id="addCategoryModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Add New Category</h3>
+                <button class="close-modal" onclick="closeCategoryModal()">&times;</button>
+            </div>
+            <form id="addCategoryForm">
+                <input type="hidden" name="id" id="categoryId">
+                <div class="form-group">
+                    <label>Category Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Solar Pumps">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeCategoryModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+    <script src="admin.js"></script>
+    <script src="charts.js"></script>
+</body>
+
+</html>
