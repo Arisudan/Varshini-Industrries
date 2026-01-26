@@ -1407,6 +1407,7 @@ if (catForm) {
     // Remove existing listeners to avoid duplicates if this file re-runs
     catForm.replaceWith(catForm.cloneNode(true));
     // Re-select after clone
+    // Re-select after clone
     document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -1428,20 +1429,25 @@ if (catForm) {
 }
 
 
+
+window.openAddCategoryModal = () => {
+    const modal = document.getElementById('addCategoryModal');
+    if (modal) modal.style.display = 'flex';
+};
+
 window.deleteCategory = async (id) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
-
     showLoading('Deleting...');
     try {
         await DataService.deleteItem('categories', id);
         showNotification('Category deleted', 'success');
         loadCategories();
     } catch (err) {
-        // Server will return 400 if products exist in category, so message helps
         alert("Cannot delete: " + (err.message || "Ensure no products are in this category first."));
     }
     hideLoading();
 };
+
 
 // Load categories on start
 // --- WARRANTY REQUESTS ---
@@ -1538,44 +1544,7 @@ window.deleteWarranty = async (id) => {
 loadCategories();
 loadWarranties();
 
-// --- CATEGORY ACTIONS ---
 
-// --- CATEGORY ACTIONS ---
-
-const addCategoryForm = document.getElementById('addCategoryForm');
-if (addCategoryForm) {
-    addCategoryForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = addCategoryForm.name.value.trim();
-        const id = addCategoryForm.id.value; // Support Edit
-
-        if (!name) return;
-
-        try {
-            if (id) {
-                // Update
-                await DataService.updateItem('categories', id, { name });
-                showNotification('✅ Category updated!', 'success');
-            } else {
-                // Create
-                const categories = await DataService.getCollection('categories');
-                if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-                    showNotification('Category already exists', 'error');
-                    return;
-                }
-                await DataService.addItem('categories', { id: Date.now(), name });
-                showNotification('✅ Category added!', 'success');
-            }
-
-            closeCategoryModal();
-            loadCategories();
-        } catch (error) {
-            showNotification('Error saving category: ' + error.message, 'error');
-        }
-    });
-
-    // Reset ID on close
-}
 
 window.closeCategoryModal = function () {
     const modal = document.getElementById('addCategoryModal');
@@ -1606,34 +1575,4 @@ window.openEditCategoryModal = async (id) => {
     if (modal) modal.style.display = 'flex';
 };
 
-window.deleteCategory = async (id) => {
-    if (!confirm('Delete this category? This cannot be undone.')) return;
 
-    try {
-        const categories = await DataService.getCollection('categories');
-        const products = await DataService.getCollection('products');
-
-        const category = categories.find(c => c.id === id);
-        if (!category) return;
-
-        if (products.some(p => p.category === category.name)) {
-            showNotification('Cannot delete: Category has products.', 'error');
-            return;
-        }
-
-        await DataService.deleteItem('categories', id);
-        showNotification('✅ Category deleted!', 'success');
-        loadCategories();
-    } catch (error) {
-        showNotification('Error deleting category: ' + error.message, 'error');
-    }
-};
-
-// --- MIGRATION UTILITY ---
-// --- MIGRATION UTILITY ---
-
-
-window.openAddCategoryModal = () => {
-    const modal = document.getElementById('addCategoryModal');
-    if (modal) modal.style.display = 'flex';
-};
