@@ -1504,12 +1504,22 @@ function renderWarranties(warranties) {
     }).join('');
 }
 
-window.filterWarranties = function (status) {
+window.filterWarranties = function (status, btn) {
     if (!window.allWarranties) return;
     const filtered = status === 'all'
         ? window.allWarranties
         : window.allWarranties.filter(d => d.status === status);
     renderWarranties(filtered);
+
+    // Update active UI
+    if (btn) {
+        // Find parent group and remove active from siblings
+        const group = btn.parentElement;
+        if (group) {
+            group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        }
+        btn.classList.add('active');
+    }
 };
 
 window.updateWarrantyStatus = async (id, newStatus) => {

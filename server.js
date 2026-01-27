@@ -129,6 +129,36 @@ app.get('/api/check-auth', (req, res) => {
     res.json({ authenticated: !!req.session.user, user: req.session.user });
 });
 
+// 1.5 Change Password
+app.post('/api/change-password', isAuthenticated, (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    const username = req.user ? req.user.username : (req.session.user ? req.session.user.name : 'admin'); // simplifed for now
+
+    // In a real app, we should seek by ID. Here we assume 'admin' is the user or use the token's username.
+    // Since we only have one admin usually, let's find by username from token.
+    // If session-based (fallback), we might need to store username in session.
+
+    // Better: Get username from DB using the ID or Name
+    const targetUser = req.user ? req.user.username : 'admin';
+
+    db.get('SELECT * FROM users WHERE username = ?', [targetUser], (err, user) => {
+        if (err || !user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        if (!bcrypt.compareSync(currentPassword, user.password)) {
+            return res.status(400).json({ success: false, message: 'Incorrect current password' });
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(newPassword, salt);
+
+        db.run('UPDATE users SET password = ? WHERE username = ?', [hash, targetUser], (err) => {
+            if (err) return res.status(500).json({ success: false, message: 'Error updating password' });
+            res.json({ success: true, message: 'Password updated successfully' });
+        });
+    });
+});
+
+
 // 2. Products (Public)
 app.get('/api/public/products', (req, res) => {
     db.all('SELECT * FROM products', [], (err, rows) => {

@@ -308,11 +308,11 @@
             <section class="panel-section">
                 <div class="panel-header">
                     <h3>Warranty Requests</h3>
-                    <div>
-                        <span style="font-size:0.9rem; color:#666; margin-right:10px;">Filter:</span>
-                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('all')">All</button>
-                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('Pending')">Pending</button>
-                        <button class="btn btn-sm btn-outline" onclick="filterWarranties('Approved')">Approved</button>
+                    <div class="btn-group">
+                        <button class="filter-btn active" onclick="filterWarranties('all', this)">All</button>
+                        <button class="filter-btn" onclick="filterWarranties('Pending', this)">Pending</button>
+                        <button class="filter-btn" onclick="filterWarranties('Approved', this)">Approved</button>
+                        <button class="filter-btn" onclick="filterWarranties('Rejected', this)">Rejected</button>
                     </div>
                 </div>
                 <div class="table-responsive">
