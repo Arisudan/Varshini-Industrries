@@ -21,81 +21,26 @@
 
     <link rel="stylesheet" href="styles.css?v=43">
     <style>
-        /* Specific Styles for Products Page */
-        .page-header {
-            background: linear-gradient(135deg, #0A2540 0%, #051626 100%);
-            padding: 80px 0; /* Balanced padding for vertical centering */
-            text-align: center;
-            color: white;
-            margin-bottom: 50px;
-            display: flex;
-            align-items: center; /* Vertical Center */
-            justify-content: center;
-            min-height: 300px; /* Ensure enough height for visual weight */
-        }
-
-        .page-header h1 {
-            font-size: clamp(2rem, 5vw, 4rem); /* Responsive Font Size */
-            margin-bottom: 20px;
-            color: #ffffff; /* Explicit White */
-            font-weight: 800; /* Bolder */
-            text-transform: uppercase;
-            word-wrap: break-word; /* Prevent overflow */
-        }
-
-        .page-header p {
-            font-size: 1.5rem; /* Increased size */
-            opacity: 0.9;
-            max-width: 800px; /* Wider to accommodate text */
-            margin: 0 auto;
-            line-height: 1.6;
-            color: #e0e0e0; /* Off-white for subtitle */
-        }
-
+        /* Restored Sidebar Logic */
         .products-layout {
             display: flex;
             gap: 40px;
             padding-bottom: 80px;
         }
 
-        @media (max-width: 900px) {
-            .products-layout {
-                flex-direction: column;
-            }
-            .sidebar-filter {
-                max-width: 100% !important;
-                width: 100% !important;
-            }
-        }
-
         .sidebar-filter {
-            width: 100%; 
-            max-width: 300px; /* Limit width */
+            width: 100%;
+            max-width: 300px;
             flex-shrink: 0;
             background: #fff;
             padding: 25px 20px;
             border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             height: fit-content;
-            max-height: calc(100vh - 140px); /* Ensure it fits in viewport */
-            overflow-y: auto; /* Scroll if category list is too long */
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
             position: sticky;
             top: 100px;
-            scrollbar-width: thin; /* Modern browsers scrollbar */
-            scrollbar-color: var(--industrial-teal) #f1f1f1;
-        }
-
-        /* Custom Scrollbar for Chrome/Safari */
-        .sidebar-filter::-webkit-scrollbar {
-            width: 6px;
-        }
-        .sidebar-filter::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        .sidebar-filter::-webkit-scrollbar-thumb {
-            background: var(--industrial-teal);
-            border-radius: 10px;
         }
 
         .sidebar-filter h3 {
@@ -111,12 +56,12 @@
         }
 
         .category-list li {
-            margin-bottom: 5px; /* Reduced margin */
+            margin-bottom: 5px;
         }
 
         .category-list a {
             display: block;
-            padding: 8px 12px; /* Optimized padding */
+            padding: 8px 12px;
             border-radius: 4px;
             color: #555;
             font-weight: 600;
@@ -139,11 +84,14 @@
             .products-layout {
                 flex-direction: column;
             }
+
             .sidebar-filter {
-                display: none; /* Hidden on mobile/tablet portrait, use bottom nav/menu */
+                display: none;
             }
         }
     </style>
+
+
 </head>
 
 <body>

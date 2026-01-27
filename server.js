@@ -89,8 +89,18 @@ const readDb = () => {
     }
 };
 
-// Helper to write DB
+// Helper to write DB (Safe Write with Backup)
 const writeDb = (data) => {
+    // 1. Create a backup of the current file before overwriting
+    if (fs.existsSync(DB_FILE)) {
+        const backupFile = path.join(__dirname, 'data', 'db.backup.json');
+        try {
+            fs.copyFileSync(DB_FILE, backupFile);
+        } catch (err) {
+            console.error('Backup failed:', err);
+        }
+    }
+    // 2. Write new data
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 4));
 };
 

@@ -685,10 +685,13 @@ function createProductCardHtml(p) {
                     ${keySpecsHTML}
                     ${perfTableHTML}
 
-                    <div class="card-actions-row">
+                     <div class="card-actions-row">
                         ${p.stock === 'Out of Stock'
             ? '<span class="price-tag sold-out">Sold Out</span>'
-            : '<button class="btn-add-cart" onclick="addToCart(' + p.id + ')" title="Add to Cart"><i class="fa-solid fa-plus"></i></button>'
+            : (p.price && p.price.toLowerCase().includes('call')
+                ? '<button class="btn-add-cart" onclick="addToCart(' + p.id + ')" title="Request Quote"><i class="fa-solid fa-plus"></i></button>'
+                : '<button class="btn-add-cart" onclick="addToCart(' + p.id + ')" title="Add to Cart"><i class="fa-solid fa-plus"></i></button>'
+            )
         }
                     </div>
                 </div>
