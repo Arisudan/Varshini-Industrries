@@ -237,7 +237,7 @@
 
                 <!-- Lead Controls -->
                 <div class="controls-toolbar">
-                    <div class="flex-group" style="flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                    <div class="filter-toolbar">
                         <!-- Tabs -->
                         <div class="btn-group">
                             <button class="filter-btn active"
@@ -249,13 +249,15 @@
                             <button class="filter-btn" onclick="LeadManager.setFilterStatus('Sold', this)">Sold</button>
                         </div>
 
-                        <!-- Search & Date -->
-                        <input type="text" id="leadSearch" class="input-field" placeholder="Search leads..."
-                            onkeyup="LeadManager.render()">
-                        <input type="date" id="leadStartDate" class="input-field" onchange="LeadManager.render()"
-                            title="Start Date">
-                        <input type="date" id="leadEndDate" class="input-field" onchange="LeadManager.render()"
-                            title="End Date">
+                        <div style="flex-grow:1; display:flex; gap:10px;">
+                            <input type="text" id="leadSearch" class="input-field"
+                                placeholder="Search leads by name, email..." onkeyup="LeadManager.render()"
+                                style="flex-grow:1;">
+                            <input type="date" id="leadStartDate" class="input-field" onchange="LeadManager.render()"
+                                title="Start Date" style="width: auto;">
+                            <input type="date" id="leadEndDate" class="input-field" onchange="LeadManager.render()"
+                                title="End Date" style="width: auto;">
+                        </div>
                     </div>
 
                     <div id="leadBulkActions" class="bulk-toolbar"

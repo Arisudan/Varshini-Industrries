@@ -968,12 +968,8 @@ async function saveProduct(formData) {
             return;
         }
 
-        // Validate Price (Allow "18,500" format but must be positive number)
-        const priceNum = parseFloat(String(priceRaw).replace(/,/g, ''));
-        if (priceRaw && (isNaN(priceNum) || priceNum < 0)) {
-            alert('Invalid Price. Please enter a positive number.');
-            return;
-        }
+        // Price Validation Removed: Allow text like "Call for Price" or empty string
+        /* Strict validation removed per client request */
 
         showLoading('Saving Product...');
 

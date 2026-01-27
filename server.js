@@ -258,6 +258,51 @@ app.put('/api/products/:id', isAuthenticated, upload.single('image'), (req, res)
 app.delete('/api/products/:id', isAuthenticated, (req, res) => {
     db.run('DELETE FROM products WHERE id = ?', [req.params.id], function (err) {
         if (err) { logger.error('Delete Product Error', err); return res.status(500).json({ success: false }); }
+    });
+});
+
+// --- CATEGORIES ROUTES ---
+app.get('/api/categories', isAuthenticated, (req, res) => {
+    db.all('SELECT * FROM categories', [], (err, rows) => {
+        if (err) return res.status(500).json({ message: 'DB Error' });
+        // Calculate counts
+        db.all('SELECT category, COUNT(*) as count FROM products GROUP BY category', [], (err2, counts) => {
+            const mapped = rows.map(c => {
+                const match = counts ? counts.find(x => x.category === c.name) : null;
+                return { ...c, count: match ? match.count : 0 };
+            });
+            res.json(mapped);
+        });
+    });
+});
+
+app.post('/api/categories', isAuthenticated, (req, res) => {
+    const { id, name } = req.body;
+    db.run('INSERT INTO categories (id, name) VALUES (?, ?)', [id || Date.now(), name], function (err) {
+        if (err) return res.status(500).json({ message: 'Error adding category' });
+        res.json({ success: true });
+    });
+});
+
+app.delete('/api/categories/:id', isAuthenticated, (req, res) => {
+    db.run('DELETE FROM categories WHERE id = ?', [req.params.id], function (err) {
+        if (err) return res.status(500).json({ message: 'Error deleting' });
+        res.json({ success: true });
+    });
+});
+
+// --- LEADS ROUTES ---
+app.delete('/api/leads/:id', isAuthenticated, (req, res) => {
+    db.run('DELETE FROM leads WHERE id = ?', [req.params.id], function (err) {
+        if (err) return res.status(500).json({ message: 'Error deleting lead' });
+        res.json({ success: true });
+    });
+});
+
+app.post('/api/leads/status', isAuthenticated, (req, res) => {
+    const { id, status } = req.body;
+    db.run('UPDATE leads SET status = ? WHERE id = ?', [status, id], function (err) {
+        if (err) return res.status(500).json({ message: 'Error updating status' });
         res.json({ success: true });
     });
 });
