@@ -2,7 +2,7 @@
     "users": [
         {
             "username": "admin",
-            "password": "admin123",
+            "password": "$2b$10$5q9coogH7QOV5DvnL7BsVeJJO7etau4VYDjHksMXtwDu2hs7K4WJ",
             "role": "admin",
             "name": "Super Admin"
         }
