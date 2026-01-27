@@ -523,11 +523,7 @@ const ProductManager = {
         const tbody = document.getElementById('productTableBody');
         if (tbody) {
             if (total === 0) {
-                if (this.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products in database. Add one!</td></tr>';
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products found in this category/search.</td></tr>';
-                }
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:20px;">No products found</td></tr>';
             } else {
                 tbody.innerHTML = pageData.map(p => this.createRow(p)).join('');
             }
@@ -603,24 +599,6 @@ const ProductManager = {
         this.render();
     },
 
-    // Optimistic UI method
-    removeOne(id) {
-        this.data = this.data.filter(p => String(p.id) !== String(id));
-        this.selected.delete(String(id));
-        this.render();
-    },
-
-    // Optimistic UI method
-    upsertOne(product) {
-        const idx = this.data.findIndex(p => String(p.id) === String(product.id));
-        if (idx >= 0) {
-            this.data[idx] = product;
-        } else {
-            this.data.unshift(product);
-        }
-        this.render();
-    },
-
     renderPagination(total) {
         const div = document.getElementById('prodPagination');
         if (!div) return;
@@ -652,29 +630,16 @@ const LeadManager = {
 
     init(leads) {
         this.data = leads || [];
-        // Do NOT reset filters here, just re-render with new data
         this.render();
     },
 
     setFilterStatus(status, btn) {
         this.filters.status = status;
-
-        // Use passed button OR find it by text content if necessary (fallback)
-        let targetBtn = btn;
-        if (!targetBtn && status) {
-            // Fallback find button by text
-            const buttons = document.querySelectorAll('#view-leads .filter-btn');
-            buttons.forEach(b => {
-                if (b.innerText.includes(status) || (status === 'All' && b.innerText === 'All')) targetBtn = b;
-            });
-        }
-
         // Update active btn style
-        if (targetBtn) {
+        if (btn) {
             document.querySelectorAll('#view-leads .filter-btn').forEach(b => b.classList.remove('active'));
-            targetBtn.classList.add('active');
+            btn.classList.add('active');
         }
-
         this.page = 1;
         this.render();
     },
@@ -1013,29 +978,16 @@ async function saveProduct(formData) {
         showLoading('Saving Product...');
 
         if (id) {
-            // Update
-            const { image } = await DataService.updateItem('products', id, formData);
-            // Construct optimistic object (best effort)
-            const updated = Object.fromEntries(formData.entries());
-            updated.id = id;
-            if (image) updated.image = image; // Use server returned image if any
-            else updated.image = document.getElementById('currentImagePath').value;
-
-            ProductManager.upsertOne(updated);
-            showNotification('✅ Product updated!', 'success');
+            await DataService.updateItem('products', id, formData);
+            showNotification('✅ Product updated successfully!', 'success');
         } else {
-            // Add
-            const res = await DataService.addItem('products', formData);
-            if (res.product) ProductManager.upsertOne(res.product); // Server returns full object with ID
-            showNotification('✅ Product added!', 'success');
+            await DataService.addItem('products', formData);
+            showNotification('✅ Product added successfully!', 'success');
         }
 
         closeModal();
         hideLoading();
-        // Silent background sync
-        if (typeof loadCategories === 'function') loadCategories();
-
-
+        refreshDashboard();
 
         // Reload Categories just in case a new category was introduced
         if (typeof loadCategories === 'function') loadCategories();
@@ -1049,21 +1001,14 @@ async function saveProduct(formData) {
 }
 
 window.deleteProduct = async (id) => {
-    if (!confirm('Delete this product?')) return;
-
-    // 1. Optimistic UI Update (Instant)
-    ProductManager.removeOne(id);
-
+    if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-        // 2. Network Call
         await DataService.deleteItem('products', id);
-        showNotification('✅ Deleted', 'success');
-        // 3. Silent Category Update
-        if (typeof loadCategories === 'function') loadCategories();
-    } catch (error) {
-        showNotification('Error deleting: ' + error.message, 'error');
-        // Revert on error
+        showNotification('✅ Product deleted successfully!', 'success');
         refreshDashboard();
+        loadCategories(); // Update category counts
+    } catch (error) {
+        showNotification('Error deleting product: ' + error.message, 'error');
     }
 };
 
@@ -1462,7 +1407,6 @@ if (catForm) {
     // Remove existing listeners to avoid duplicates if this file re-runs
     catForm.replaceWith(catForm.cloneNode(true));
     // Re-select after clone
-    // Re-select after clone
     document.getElementById('addCategoryForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -1484,25 +1428,20 @@ if (catForm) {
 }
 
 
-
-window.openAddCategoryModal = () => {
-    const modal = document.getElementById('addCategoryModal');
-    if (modal) modal.style.display = 'flex';
-};
-
 window.deleteCategory = async (id) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
+
     showLoading('Deleting...');
     try {
         await DataService.deleteItem('categories', id);
         showNotification('Category deleted', 'success');
         loadCategories();
     } catch (err) {
+        // Server will return 400 if products exist in category, so message helps
         alert("Cannot delete: " + (err.message || "Ensure no products are in this category first."));
     }
     hideLoading();
 };
-
 
 // Load categories on start
 // --- WARRANTY REQUESTS ---
@@ -1599,7 +1538,44 @@ window.deleteWarranty = async (id) => {
 loadCategories();
 loadWarranties();
 
+// --- CATEGORY ACTIONS ---
 
+// --- CATEGORY ACTIONS ---
+
+const addCategoryForm = document.getElementById('addCategoryForm');
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = addCategoryForm.name.value.trim();
+        const id = addCategoryForm.id.value; // Support Edit
+
+        if (!name) return;
+
+        try {
+            if (id) {
+                // Update
+                await DataService.updateItem('categories', id, { name });
+                showNotification('✅ Category updated!', 'success');
+            } else {
+                // Create
+                const categories = await DataService.getCollection('categories');
+                if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                    showNotification('Category already exists', 'error');
+                    return;
+                }
+                await DataService.addItem('categories', { id: Date.now(), name });
+                showNotification('✅ Category added!', 'success');
+            }
+
+            closeCategoryModal();
+            loadCategories();
+        } catch (error) {
+            showNotification('Error saving category: ' + error.message, 'error');
+        }
+    });
+
+    // Reset ID on close
+}
 
 window.closeCategoryModal = function () {
     const modal = document.getElementById('addCategoryModal');
@@ -1630,4 +1606,34 @@ window.openEditCategoryModal = async (id) => {
     if (modal) modal.style.display = 'flex';
 };
 
+window.deleteCategory = async (id) => {
+    if (!confirm('Delete this category? This cannot be undone.')) return;
 
+    try {
+        const categories = await DataService.getCollection('categories');
+        const products = await DataService.getCollection('products');
+
+        const category = categories.find(c => c.id === id);
+        if (!category) return;
+
+        if (products.some(p => p.category === category.name)) {
+            showNotification('Cannot delete: Category has products.', 'error');
+            return;
+        }
+
+        await DataService.deleteItem('categories', id);
+        showNotification('✅ Category deleted!', 'success');
+        loadCategories();
+    } catch (error) {
+        showNotification('Error deleting category: ' + error.message, 'error');
+    }
+};
+
+// --- MIGRATION UTILITY ---
+// --- MIGRATION UTILITY ---
+
+
+window.openAddCategoryModal = () => {
+    const modal = document.getElementById('addCategoryModal');
+    if (modal) modal.style.display = 'flex';
+};

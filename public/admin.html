@@ -124,31 +124,6 @@
                     <canvas id="categoriesChart"></canvas>
                 </div>
             </div>
-
-            <!-- Activity Log Widget -->
-            <div class="panel-section" style="margin-top: 30px;">
-                <div class="panel-header">
-                    <h3><i class="fa-solid fa-list-ul"></i> Recent System Activity</h3>
-                    <button class="btn btn-sm btn-outline" onclick="loadActivityLog()">Refresh</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="data-table plain">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activityLogBody">
-                            <tr>
-                                <td colspan="4" class="text-center">Loading logs...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
 
         <!-- VIEW: PRODUCTS (Refactored) -->
@@ -473,23 +448,6 @@
                     </div>
                 </div>
 
-                <!-- System Management Card (Backup) -->
-                <div class="settings-card wide">
-                    <div class="card-header">
-                        <div class="icon-box green"><i class="fa-solid fa-database"></i></div>
-                        <h4>System Management</h4>
-                    </div>
-                    <div class="card-body">
-                        <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">
-                            Download a complete backup of your database and product images.
-                            It is recommended to do this weekly.
-                        </p>
-                        <button class="btn btn-primary" onclick="downloadBackup()">
-                            <i class="fa-solid fa-cloud-arrow-down"></i> Download Full Backup (.zip)
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Migration Card (Temporary) -->
 
 
@@ -587,7 +545,6 @@
 
     <script src="admin.js"></script>
     <script src="charts.js"></script>
-    <script src="admin_extras.js"></script>
 </body>
 
 </html>
