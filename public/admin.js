@@ -183,6 +183,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.exportWarrantiesToCSV = async () => {
+        try {
+            showLoading('Exporting warranties...');
+            const warranties = await DataService.getCollection('warranties');
+            hideLoading();
+
+            if (!warranties.length) return showNotification('No warranties to export', 'error');
+
+            const headers = ['Date', 'Name', 'Product', 'Phone', 'Email', 'Address', 'Status'];
+            const rows = warranties.map(w => [
+                w.date, w.name, w.product, w.phone, w.email, w.address, w.status
+            ].map(e => `"${e || ''}"`).join(','));
+
+            downloadCSV([headers.join(','), ...rows].join('\n'), 'warranty_registrations.csv');
+            showNotification('✅ Warranties exported successfully!', 'success');
+        } catch (e) {
+            hideLoading();
+            showNotification('Export failed: ' + e.message, 'error');
+        }
+    };
+
     function downloadCSV(csvContent, fileName) {
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");

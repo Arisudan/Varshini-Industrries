@@ -308,13 +308,18 @@
         <!-- VIEW: DEALERS (Placeholder) -->
         <div id="view-warranties" class="admin-view" style="display: none;">
             <section class="panel-section">
-                <div class="panel-header">
+                <div class="panel-header" style="flex-wrap: wrap; gap: 15px;">
                     <h3>Warranty Requests</h3>
-                    <div class="btn-group">
-                        <button class="filter-btn active" onclick="filterWarranties('all', this)">All</button>
-                        <button class="filter-btn" onclick="filterWarranties('Pending', this)">Pending</button>
-                        <button class="filter-btn" onclick="filterWarranties('Approved', this)">Approved</button>
-                        <button class="filter-btn" onclick="filterWarranties('Rejected', this)">Rejected</button>
+                    <div class="flex-bw" style="display:flex; gap:15px; align-items:center;">
+                        <div class="btn-group">
+                            <button class="filter-btn active" onclick="filterWarranties('all', this)">All</button>
+                            <button class="filter-btn" onclick="filterWarranties('Pending', this)">Pending</button>
+                            <button class="filter-btn" onclick="filterWarranties('Approved', this)">Approved</button>
+                            <button class="filter-btn" onclick="filterWarranties('Rejected', this)">Rejected</button>
+                        </div>
+                        <button class="btn btn-outline" onclick="exportWarrantiesToCSV()">
+                            <i class="fa-solid fa-download"></i> CSV
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive">

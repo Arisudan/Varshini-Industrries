@@ -9,44 +9,34 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
-const sqlite3 = require('sqlite3').verbose();
 const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 const multer = require('multer');
+
+// --- FIREBASE SETUP ---
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
 
 // --- CONFIGURATION ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_in_prod';
-const DB_PATH = path.join(__dirname, 'data', 'varshini.db');
 
-// --- LOGGER SETUP (Winston) ---
+// --- LOGGER ---
 const logger = winston.createLogger({
     level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-    ),
+    format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
     transports: [
         new winston.transports.File({ filename: 'error.log', level: 'error' }),
         new winston.transports.File({ filename: 'combined.log' })
     ]
 });
-
-if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-        format: winston.format.simple()
-    }));
-}
-
-// --- DB CONNECTION ---
-const db = new sqlite3.Database(DB_PATH, (err) => {
-    if (err) {
-        logger.error('Could not connect to database', err);
-    } else {
-        logger.info('Connected to SQLite database');
-    }
-});
+if (process.env.NODE_ENV !== 'production') logger.add(new winston.transports.Console({ format: winston.format.simple() }));
 
 // --- MIDDLEWARE ---
 app.use(cors());
@@ -54,21 +44,20 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback_secret',
+    secret: process.env.SESSION_SECRET || 'fallback',
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false, maxAge: 3600000, httpOnly: true }
 }));
 
-// Rate Limiter (Security)
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
+    windowMs: 15 * 60 * 1000,
+    max: 200, // Slightly higher for admin usage
+    message: 'Too many requests.'
 });
-app.use('/api/', limiter); // Apply to API routes only
+app.use('/api/', limiter);
 
-// Multer Storage
+// Multer (Images still local for now)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadDir = path.join(__dirname, 'public/assets/uploads');
@@ -82,42 +71,43 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
-// --- AUTH MIDDLEWARE ---
 const isAuthenticated = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
     if (token) {
         jwt.verify(token, JWT_SECRET, (err, user) => {
-            if (err) return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+            if (err) return res.status(403).json({ success: false });
             req.user = user;
             return next();
         });
     } else if (req.session && req.session.user) {
         return next();
     } else {
-        return res.status(401).json({ success: false, message: 'Unauthorized. Please login.' });
+        return res.status(401).json({ success: false });
     }
 };
 
-// --- API ROUTES ---
+// --- ROUTES (FIREBASE EDITION) ---
 
 // 1. Login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
-    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
-        if (err) {
-            logger.error('Login Error', err);
-            return res.status(500).json({ success: false, message: 'Server error' });
-        }
-        if (user && bcrypt.compareSync(password, user.password)) {
+    try {
+        const snapshot = await db.collection('users').where('username', '==', username).get();
+        if (snapshot.empty) return res.status(401).json({ success: false, message: 'Invalid Credentials' });
+
+        const user = snapshot.docs[0].data();
+        if (bcrypt.compareSync(password, user.password)) {
             const token = jwt.sign({ username: user.username, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
             req.session.user = { name: user.name, role: user.role };
             res.json({ success: true, token, user: { name: user.name, role: user.role } });
         } else {
-            res.status(401).json({ success: false, message: 'Invalid Username or Password' });
+            res.status(401).json({ success: false, message: 'Invalid Credentials' });
         }
-    });
+    } catch (e) {
+        logger.error(e);
+        res.status(500).send('Login Error');
+    }
 });
 
 app.post('/api/logout', (req, res) => {
@@ -129,231 +119,235 @@ app.get('/api/check-auth', (req, res) => {
     res.json({ authenticated: !!req.session.user, user: req.session.user });
 });
 
-// 1.5 Change Password
-app.post('/api/change-password', isAuthenticated, (req, res) => {
+// Change Password
+app.post('/api/change-password', isAuthenticated, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
-    const username = req.user ? req.user.username : (req.session.user ? req.session.user.name : 'admin'); // simplifed for now
+    const targetUser = req.user ? req.user.username : 'admin'; // fallback
 
-    // In a real app, we should seek by ID. Here we assume 'admin' is the user or use the token's username.
-    // Since we only have one admin usually, let's find by username from token.
-    // If session-based (fallback), we might need to store username in session.
+    try {
+        const snapshot = await db.collection('users').where('username', '==', targetUser).get();
+        if (snapshot.empty) return res.status(404).json({ success: false });
 
-    // Better: Get username from DB using the ID or Name
-    const targetUser = req.user ? req.user.username : 'admin';
-
-    db.get('SELECT * FROM users WHERE username = ?', [targetUser], (err, user) => {
-        if (err || !user) return res.status(404).json({ success: false, message: 'User not found' });
+        const docId = snapshot.docs[0].id;
+        const user = snapshot.docs[0].data();
 
         if (!bcrypt.compareSync(currentPassword, user.password)) {
-            return res.status(400).json({ success: false, message: 'Incorrect current password' });
+            return res.status(400).json({ success: false, message: 'Bad Password' });
         }
 
-        const salt = bcrypt.genSaltSync(10);
-        const hash = bcrypt.hashSync(newPassword, salt);
-
-        db.run('UPDATE users SET password = ? WHERE username = ?', [hash, targetUser], (err) => {
-            if (err) return res.status(500).json({ success: false, message: 'Error updating password' });
-            res.json({ success: true, message: 'Password updated successfully' });
-        });
-    });
+        const hash = bcrypt.hashSync(newPassword, 10);
+        await db.collection('users').doc(docId).update({ password: hash });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
 });
-
 
 // 2. Products (Public)
-app.get('/api/public/products', (req, res) => {
-    db.all('SELECT * FROM products', [], (err, rows) => {
-        if (err) {
-            logger.error('Fetch Products Error', err);
-            return res.status(500).send('Error fetching products');
-        }
-        // Parse JSON table_data
-        const products = rows.map(p => ({
-            ...p,
-            table_data: p.table_data ? JSON.parse(p.table_data) : {}
-        }));
+app.get('/api/public/products', async (req, res) => {
+    try {
+        const snapshot = await db.collection('products').get();
+        const products = snapshot.docs.map(doc => {
+            const d = doc.data();
+            // Firebase stores objects directly, no need for JSON.parse if we migrated correctly
+            // But strict migration parsed strings to objects, so they are objects now.
+            return d;
+        });
         res.json(products);
-    });
-});
-
-// 3. Leads (Public - Create)
-app.post('/api/leads', (req, res) => {
-    const { name, email, phone, message } = req.body;
-    const id = uuidv4();
-    const date = new Date().toLocaleString();
-    const interest = `Enquiry: ${message.substring(0, 30)}...`;
-    const contact = JSON.stringify({ email, phone });
-    const status = 'New Lead';
-
-    db.run('INSERT INTO leads (id, date, client, interest, status, contact_info) VALUES (?, ?, ?, ?, ?, ?)',
-        [id, date, name, interest, status, contact],
-        function (err) {
-            if (err) {
-                logger.error('Create Lead Error', err);
-                return res.status(500).json({ success: false });
-            }
-            res.json({ success: true, message: 'Lead captured successfully' });
-        }
-    );
-});
-
-// 4. Products (Admin - Create/Update/Delete)
-app.post('/api/products', isAuthenticated, upload.single('image'), (req, res) => {
-    const p = req.body;
-    let tableDataStr = '{}';
-    if (typeof p.table_data === 'string') {
-        try { tableDataStr = p.table_data; } catch (e) { } // Assuming client sends JSON string
-    } else if (typeof p.table_data === 'object') {
-        tableDataStr = JSON.stringify(p.table_data);
+    } catch (e) {
+        logger.error(e);
+        res.status(500).send('Error');
     }
+});
 
-    // Validate JSON validity just in case
-    try { JSON.parse(tableDataStr); } catch (e) { tableDataStr = '{}'; }
+// 3. Leads (Create)
+app.post('/api/leads', async (req, res) => {
+    const { name, email, phone, message } = req.body;
+    const lead = {
+        id: uuidv4(),
+        date: new Date().toLocaleString(),
+        client: name,
+        interest: `Enquiry: ${message ? message.substring(0, 50) : 'General'}`,
+        status: 'New Lead',
+        contact_info: { email, phone }
+    };
+    try {
+        await db.collection('leads').doc(lead.id).set(lead);
+        res.json({ success: true });
+    } catch (e) {
+        logger.error(e);
+        res.status(500).json({ success: false });
+    }
+});
+
+// 4. Products (Admin)
+app.post('/api/products', isAuthenticated, upload.single('image'), async (req, res) => {
+    const p = req.body;
+    let tableData = {};
+    try { tableData = typeof p.table_data === 'string' ? JSON.parse(p.table_data) : p.table_data; } catch (e) { }
 
     const id = Date.now();
     let imagePath = 'assets/Home/Centrifugal Pumps.png';
     if (req.file) imagePath = 'assets/uploads/' + req.file.filename;
 
-    db.run("INSERT INTO products (id, category, name, series, hp, price, stock, image, table_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [id, p.category, p.name, p.series, p.hp, p.price, p.stock, imagePath, tableDataStr],
-        function (err) {
-            if (err) { logger.error('Add Product Error', err); return res.status(500).json({ success: false }); }
-            res.json({ success: true, product: { ...p, id, image: imagePath } });
-        }
-    );
+    const newProd = {
+        id: id,
+        category: p.category,
+        name: p.name,
+        series: p.series,
+        hp: p.hp,
+        price: p.price,
+        stock: p.stock,
+        image: imagePath,
+        table_data: tableData || {}
+    };
+
+    try {
+        await db.collection('products').doc(String(id)).set(newProd);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.put('/api/products/:id', isAuthenticated, upload.single('image'), (req, res) => {
-    const id = parseInt(req.params.id);
+app.put('/api/products/:id', isAuthenticated, upload.single('image'), async (req, res) => {
+    const id = req.params.id;
     const p = req.body;
 
-    // First, fetch existing to keep image if not updated
-    db.get('SELECT * FROM products WHERE id = ?', [id], (err, row) => {
-        if (!row) return res.status(404).json({ message: 'Product not found' });
+    try {
+        const docRef = db.collection('products').doc(String(id));
+        const docHook = await docRef.get();
+        if (!docHook.exists) return res.status(404).json({ message: 'Not Found' });
 
-        let imagePath = row.image;
+        const old = docHook.data();
+        let imagePath = old.image;
         if (req.file) imagePath = 'assets/uploads/' + req.file.filename;
 
-        let tableDataStr = row.table_data;
-        if (p.table_data) tableDataStr = typeof p.table_data === 'string' ? p.table_data : JSON.stringify(p.table_data);
+        // Merge logic
+        const updateData = {
+            category: p.category || old.category,
+            name: p.name || old.name,
+            series: p.series || old.series,
+            hp: p.hp || old.hp,
+            price: p.price || old.price,
+            stock: p.stock || old.stock,
+            image: imagePath
+        };
+        // Optional Table Data update - keeping simple for now
 
-        // Update each field if provided, else keep old (simplistic approach: full update usually sent by frontend)
-        // Optimized: just overwrite with new body values + defaults
-        const category = p.category || row.category;
-        const name = p.name || row.name;
-        const series = p.series || row.series;
-        const hp = p.hp || row.hp;
-        const price = p.price || row.price;
-        const stock = p.stock || row.stock;
-
-        db.run("UPDATE products SET category=?, name=?, series=?, hp=?, price=?, stock=?, image=?, table_data=? WHERE id=?",
-            [category, name, series, hp, price, stock, imagePath, tableDataStr, id],
-            function (err) {
-                if (err) { logger.error('Update Product Error', err); return res.status(500).json({ success: false }); }
-                res.json({ success: true });
-            }
-        );
-    });
+        await docRef.update(updateData);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.delete('/api/products/:id', isAuthenticated, (req, res) => {
-    db.run('DELETE FROM products WHERE id = ?', [req.params.id], function (err) {
-        if (err) { logger.error('Delete Product Error', err); return res.status(500).json({ success: false }); }
-    });
+app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.collection('products').doc(req.params.id).delete();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// --- CATEGORIES ROUTES ---
-app.get('/api/categories', isAuthenticated, (req, res) => {
-    db.all('SELECT * FROM categories', [], (err, rows) => {
-        if (err) return res.status(500).json({ message: 'DB Error' });
-        // Calculate counts
-        db.all('SELECT category, COUNT(*) as count FROM products GROUP BY category', [], (err2, counts) => {
-            const mapped = rows.map(c => {
-                const match = counts ? counts.find(x => x.category === c.name) : null;
-                return { ...c, count: match ? match.count : 0 };
-            });
-            res.json(mapped);
+// --- CATEGORIES ---
+app.get('/api/categories', isAuthenticated, async (req, res) => {
+    try {
+        const catsSnap = await db.collection('categories').get();
+        const prodsSnap = await db.collection('products').get(); // Need to count in code or aggregation query
+
+        const products = prodsSnap.docs.map(d => d.data());
+        const cats = catsSnap.docs.map(d => {
+            const c = d.data();
+            const count = products.filter(p => p.category === c.name).length;
+            return { ...c, count };
         });
-    });
+        res.json(cats);
+    } catch (e) { res.status(500).json([]); }
 });
 
-app.post('/api/categories', isAuthenticated, (req, res) => {
+app.post('/api/categories', isAuthenticated, async (req, res) => {
     const { id, name } = req.body;
-    db.run('INSERT INTO categories (id, name) VALUES (?, ?)', [id || Date.now(), name], function (err) {
-        if (err) return res.status(500).json({ message: 'Error adding category' });
+    const newId = id || Date.now();
+    try {
+        await db.collection('categories').doc(String(newId)).set({ id: newId, name });
         res.json({ success: true });
-    });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.delete('/api/categories/:id', isAuthenticated, (req, res) => {
-    db.run('DELETE FROM categories WHERE id = ?', [req.params.id], function (err) {
-        if (err) return res.status(500).json({ message: 'Error deleting' });
+app.delete('/api/categories/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.collection('categories').doc(req.params.id).delete();
         res.json({ success: true });
-    });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// --- LEADS ROUTES ---
-app.delete('/api/leads/:id', isAuthenticated, (req, res) => {
-    db.run('DELETE FROM leads WHERE id = ?', [req.params.id], function (err) {
-        if (err) return res.status(500).json({ message: 'Error deleting lead' });
+// --- WARRANTIES ---
+app.post('/api/warranties', async (req, res) => {
+    // Public endpoint for registration
+    const w = req.body;
+    const warranty = {
+        id: uuidv4(),
+        date: new Date().toLocaleString(),
+        name: w.name,
+        email: w.email,
+        phone: w.phone,
+        address: w.address,
+        product: w.product || 'Not Specified',
+        purchaseDate: w.purchaseDate,
+        message: w.message,
+        status: 'Pending'
+    };
+    try {
+        await db.collection('warranties').doc(warranty.id).set(warranty);
         res.json({ success: true });
-    });
+    } catch (e) {
+        logger.error(e);
+        res.status(500).json({ success: false });
+    }
 });
 
-app.post('/api/leads/status', isAuthenticated, (req, res) => {
+// --- LEADS ---
+app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.collection('leads').doc(req.params.id).delete();
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+app.post('/api/leads/status', isAuthenticated, async (req, res) => {
     const { id, status } = req.body;
-    db.run('UPDATE leads SET status = ? WHERE id = ?', [status, id], function (err) {
-        if (err) return res.status(500).json({ message: 'Error updating status' });
+    try {
+        await db.collection('leads').doc(id).update({ status });
         res.json({ success: true });
-    });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 5. Dashboard Data (Aggregation)
-app.get('/api/dashboard', isAuthenticated, (req, res) => {
-    const data = { products: [], leads: [], warranties: [], categories: [] };
+// --- DASHBOARD ---
+app.get('/api/dashboard', isAuthenticated, async (req, res) => {
+    try {
+        // Parallel Fetch
+        const [pSnap, lSnap, wSnap, cSnap] = await Promise.all([
+            db.collection('products').get(),
+            db.collection('leads').get(),
+            db.collection('warranties').get(),
+            db.collection('categories').get()
+        ]);
 
-    // Use Promises for parallel queries
-    const getProducts = new Promise((resolve) => db.all('SELECT * FROM products', (err, r) => resolve(r || [])));
-    const getLeads = new Promise((resolve) => db.all('SELECT * FROM leads', (err, r) => resolve(r || [])));
-    const getWarranties = new Promise((resolve) => db.all('SELECT * FROM warranties', (err, r) => resolve(r || [])));
-    const getCategories = new Promise((resolve) => db.all('SELECT * FROM categories', (err, r) => resolve(r || [])));
+        const products = pSnap.docs.map(d => d.data());
+        const leads = lSnap.docs.map(d => d.data());
+        const warranties = wSnap.docs.map(d => d.data());
+        const rawCats = cSnap.docs.map(d => d.data());
 
-    Promise.all([getProducts, getLeads, getWarranties, getCategories]).then((results) => {
-        data.products = results[0];
-        data.leads = results[1];
-        data.warranties = results[2];
-        let cats = results[3];
-
-        // Format data
-        data.products = data.products.map(p => ({ ...p, table_data: JSON.parse(p.table_data || '{}') }));
-        data.leads = data.leads.map(l => ({ ...l, contact: JSON.parse(l.contact_info || '{}') }));
-
-        // Calculate category counts
-        if (cats.length === 0 && data.products.length > 0) {
-            // Fallback if no categories table entry
-            const unique = [...new Set(data.products.map(p => p.category))];
-            cats = unique.map((c, i) => ({ id: i, name: c }));
-        }
-
-        const catsWithCount = cats.map(c => ({
+        const categories = rawCats.map(c => ({
             ...c,
-            count: data.products.filter(p => p.category === c.name).length
+            count: products.filter(p => p.category === c.name).length
         }));
 
-        res.json({
-            stats: {},
-            products: data.products,
-            leads: data.leads,
-            warranties: data.warranties,
-            categories: catsWithCount
-        });
-    }).catch(err => {
-        logger.error('Dashboard Data Error', err);
-        res.status(500).send('Server Error');
-    });
+        res.json({ products, leads, warranties, categories });
+    } catch (e) {
+        logger.error(e);
+        res.status(500).send('Error');
+    }
 });
 
-// Start Server
+// Start
 app.listen(PORT, () => {
-    console.log(`Enterprise Server running at http://localhost:${PORT}`);
+    console.log(`Firebase-Powered Server running at http://localhost:${PORT}`);
     logger.info(`Server started on port ${PORT}`);
 });
